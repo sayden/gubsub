@@ -11,7 +11,7 @@ import (
 
 type MockStacker struct{}
 
-func (m *MockStacker) AddToStack(msg *queue.Message) error {
+func (m *MockStacker) AddToStack(msg *queue.Message, topic string) error {
 	return nil
 }
 

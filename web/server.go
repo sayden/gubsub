@@ -37,7 +37,7 @@ func handler(w http.ResponseWriter, r *http.Request, q queue.Stacker) {
 			fmt.Println("Error trying to parse message from body", err)
 			w.WriteHeader(422) // unprocessable entity
 		} else {
-			err = q.AddToStack(msg)
+			err = q.AddToStack(msg, "default")
 
 			if err != nil {
 				w.WriteHeader(422) // unprocessable entity
