@@ -6,33 +6,35 @@ import (
 	"net/http"
 	"sync"
 
+	"github.com/sayden/gubsub/servers"
+	"github.com/sayden/gubsub/types"
+
 	"golang.org/x/net/websocket"
 )
 
 var dispatch = make(chan *[]byte)
-var listeners = make([]chan *[]byte, 0)
+
 var mutex = &sync.Mutex{}
+var Listeners = make([]types.Listener, 0)
 
 func main() {
-	//Creates socket server
-	socket := http.NewServeMux()
-	socket.Handle("/websocket", websocket.Handler(func(ws *websocket.Conn) {
-		c := make(chan *[]byte)
-		mutex.Lock()
-		listeners = append(listeners, c)
-		mutex.Unlock()
-		socketHandler(ws, c)
-	}))
-	go func(socket *http.ServeMux) { http.ListenAndServe(":12345", socket) }(socket)
-	println("Listening Websocket on port 12345")
+	servers.StartSocketServer(12345, sockerHandler)
 
-	go dispatcher()
+	go dispatcherLoop()
 
-	//Creates http server
-	httpServer := http.NewServeMux()
-	httpServer.HandleFunc("/message", messageHandler)
-	println("Listening HTTP on port 8002")
-	http.ListenAndServe(":8002", httpServer)
+	servers.StartHTTPServer(8002, messageHandler)
+}
+
+func sockerHandler(ws *websocket.Conn) {
+	c := make(chan *[]byte)
+	q := make(chan bool)
+	l := types.Listener{c, q, "default"}
+
+	mutex.Lock()
+	Listeners = append(Listeners, l)
+	mutex.Unlock()
+
+	startListener(ws, l)
 }
 
 //Parses a request to return a message.Message object
@@ -68,19 +70,19 @@ func messageHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func dispatcher() {
+func dispatcherLoop() {
 	for {
 		m := <-dispatch
-		for _, l := range listeners {
-			l <- m
+		for _, l := range Listeners {
+			l.Ch <- m
 		}
 	}
 }
 
-func socketHandler(ws *websocket.Conn, c chan *[]byte) {
+func startListener(ws *websocket.Conn, l types.Listener) {
 	println("New client")
 	for {
-		m := <-c
+		m := <-l.Ch
 		ws.Write(*m)
 	}
 }
