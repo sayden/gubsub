@@ -10,10 +10,20 @@ import (
 
 var dispatch = make(chan *[]byte)
 var listeners = make([]types.Listener, 0)
+var topics = make(map[string][]types.Listener)
 var mutex = &sync.Mutex{}
 
 func init() {
 	go dispatcherLoop()
+	//Add default topic
+	AddTopic("default")
+}
+
+func AddTopic(name string) error {
+	mutex.Lock()
+	topics[name] = make([]types.Listener, 0)
+	mutex.Unlock()
+	return nil
 }
 
 //Dispatch takes a message and distributes it among registered listeners
@@ -36,6 +46,18 @@ func AddListener(ws *websocket.Conn, l types.Listener) {
 
 	mutex.Lock()
 	listeners = append(listeners, l)
+	mutex.Unlock()
+	for {
+		m := <-l.Ch
+		ws.Write(*m)
+	}
+}
+
+func AddListenerToTopic(ws *websocket.Conn, l types.Listener, topic string) {
+	fmt.Printf("New listener for topic %s", topic)
+
+	mutex.Lock()
+	topics[topic] = append(topics[topic], l)
 	mutex.Unlock()
 	for {
 		m := <-l.Ch

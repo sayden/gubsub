@@ -1,6 +1,7 @@
 package servers
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -12,6 +13,7 @@ import (
 func StartHTTPServer(port int) {
 	httpServer := http.NewServeMux()
 	httpServer.HandleFunc("/topic/default", httpMessageHandler)
+	httpServer.HandleFunc("/topic", httpTopicHandler)
 	println("Listening HTTP on port", port)
 	http.ListenAndServe(fmt.Sprintf(":%d", port), httpServer)
 }
@@ -27,6 +29,25 @@ func getMessageFromRequest(r *http.Request) (*[]byte, error) {
 	}
 
 	return &body, nil
+}
+
+func httpTopicHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method == "POST" {
+		//Create a new topic with the body contents
+
+		msg, err := getMessageFromRequest(r)
+		if err != nil {
+			fmt.Println("Error trying to create topic", err)
+		}
+
+		var j map[string]interface{}
+		err = json.Unmarshal(*msg, &j)
+		if err != nil {
+			println("Error trying to parse json", err)
+		}
+	} else {
+		w.WriteHeader(405)
+	}
 }
 
 func httpMessageHandler(w http.ResponseWriter, r *http.Request) {

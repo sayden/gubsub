@@ -12,10 +12,10 @@ import (
 )
 
 //StartSocketServer will launch the web socket server on the specified endpoint
-func StartSocketServer(port int) {
+func StartSocketServer(port int, endpoint string) {
 	socket := http.NewServeMux()
-	socket.Handle("/default", websocket.Handler(func(ws *websocket.Conn) {
-		socketHandler(ws, "default")
+	socket.Handle(fmt.Sprintf("/%s", endpoint), websocket.Handler(func(ws *websocket.Conn) {
+		socketHandler(ws, endpoint)
 	}))
 	go func(socket *http.ServeMux) { http.ListenAndServe(fmt.Sprintf(":%d", port), socket) }(socket)
 	fmt.Printf("Listening Websocket on port %d \n", port)
@@ -23,6 +23,7 @@ func StartSocketServer(port int) {
 
 func socketHandler(ws *websocket.Conn, endpoint string) {
 
+	//Creates new listener
 	c := make(chan *[]byte)
 	q := make(chan bool)
 	l := types.Listener{
