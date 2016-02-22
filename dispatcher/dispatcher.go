@@ -9,6 +9,7 @@ import (
 )
 
 var dispatch = make(chan *[]byte)
+var msgDispatcher = make(chan *types.Message)
 var listeners = make([]types.Listener, 0)
 var topics = make(map[string][]types.Listener)
 var mutex = &sync.Mutex{}
@@ -29,6 +30,16 @@ func AddTopic(name string) error {
 //Dispatch takes a message and distributes it among registered listeners
 func Dispatch(m *[]byte) {
 	dispatch <- m
+}
+
+func topicDispatcherLoop() {
+	for {
+		m := <-msgDispatcher
+		ls := topics[m.Topic]
+		for _, l := range ls {
+			l.Ch <- m.Data
+		}
+	}
 }
 
 func dispatcherLoop() {

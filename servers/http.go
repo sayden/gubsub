@@ -45,6 +45,7 @@ func httpTopicHandler(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			println("Error trying to parse json", err)
 		}
+
 	} else {
 		w.WriteHeader(405)
 	}
