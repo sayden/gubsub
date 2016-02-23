@@ -18,6 +18,22 @@ func StartHTTPServer(port int) {
 	http.ListenAndServe(fmt.Sprintf(":%d", port), httpServer)
 }
 
+func handleRouting(w http.ResponseWriter, r *http.Request) {
+	//Get first endpoint
+
+	// TOPIC endpoint handles topic creating, messages
+	// POST /topic Creates a new topic
+	// GET /topic Returns all registered topics
+	// DELETE /topic/{name} Delete that specific topic
+	// POST /topic/{name}/message Adds a message to the topic dispatcher
+
+	// LISTENERS endpoint provides information about current listeners
+	// GET /listener returns all registered listeners and their topics
+
+	// CONFIG endpoint provides information about configuration
+	// GET /config returns information about the app
+}
+
 //Parses a request to return a []byte object with the body content
 func getMessageFromRequest(r *http.Request) (*[]byte, error) {
 	body, err := ioutil.ReadAll(r.Body)
@@ -40,12 +56,14 @@ func httpTopicHandler(w http.ResponseWriter, r *http.Request) {
 			fmt.Println("Error trying to create topic", err)
 		}
 
-		var j map[string]interface{}
+		var j map[string]string
 		err = json.Unmarshal(*msg, &j)
 		if err != nil {
 			println("Error trying to parse json", err)
 		}
 
+		AddTopic(j["topicName"])
+		w.WriteHeader(200)
 	} else {
 		w.WriteHeader(405)
 	}

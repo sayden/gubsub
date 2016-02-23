@@ -8,34 +8,45 @@ import (
 	"golang.org/x/net/websocket"
 )
 
-var dispatch = make(chan *[]byte)
-var msgDispatcher = make(chan *types.Message)
-var listeners = make([]types.Listener, 0)
-var topics = make(map[string][]types.Listener)
 var mutex = &sync.Mutex{}
 
-func init() {
-	go dispatcherLoop()
-	//Add default topic
-	AddTopic("default")
+type Dispatcher struct {
+	topics        map[string][]types.Listener
+	listeners     []types.Listener
+	msgDispatcher chan *types.Message
+	dispatch      chan *[]byte
 }
 
-func AddTopic(name string) error {
+var d *Dispatcher
+
+func init() {
+	d = &Dispatcher{
+		topics:        make(map[string][]types.Listener),
+		listeners:     make([]types.Listener, 0),
+		msgDispatcher: make(chan *types.Message),
+		dispatch:      make(chan *[]byte),
+	}
+	go dispatcherLoop()
+	//Add default topic
+	d.AddTopic("default")
+}
+
+func (d *Dispatcher) AddTopic(name string) error {
 	mutex.Lock()
-	topics[name] = make([]types.Listener, 0)
+	d.topics[name] = make([]types.Listener, 0)
 	mutex.Unlock()
 	return nil
 }
 
 //Dispatch takes a message and distributes it among registered listeners
 func Dispatch(m *[]byte) {
-	dispatch <- m
+	d.dispatch <- m
 }
 
 func topicDispatcherLoop() {
 	for {
-		m := <-msgDispatcher
-		ls := topics[m.Topic]
+		m := <-d.msgDispatcher
+		ls := d.topics[m.Topic]
 		for _, l := range ls {
 			l.Ch <- m.Data
 		}
@@ -44,31 +55,31 @@ func topicDispatcherLoop() {
 
 func dispatcherLoop() {
 	for {
-		m := <-dispatch
-		for _, l := range listeners {
+		m := <-d.dispatch
+		for _, l := range d.listeners {
 			l.Ch <- m
 		}
 	}
 }
 
 //AddListener will make a Listener to receive all incoming messages
-func AddListener(ws *websocket.Conn, l types.Listener) {
+func AddListener(l types.Listener) {
 	println("New client")
 
 	mutex.Lock()
-	listeners = append(listeners, l)
+	d.listeners = append(d.listeners, l)
 	mutex.Unlock()
-	for {
-		m := <-l.Ch
-		ws.Write(*m)
-	}
+	// for {
+	// 	m := <-l.Ch
+	// 	ws.Write(*m)
+	// }
 }
 
 func AddListenerToTopic(ws *websocket.Conn, l types.Listener, topic string) {
 	fmt.Printf("New listener for topic %s", topic)
 
 	mutex.Lock()
-	topics[topic] = append(topics[topic], l)
+	d.topics[topic] = append(d.topics[topic], l)
 	mutex.Unlock()
 	for {
 		m := <-l.Ch
@@ -77,10 +88,10 @@ func AddListenerToTopic(ws *websocket.Conn, l types.Listener, topic string) {
 }
 
 func RemoveListener(l types.Listener) error {
-	for i, registeredL := range listeners {
+	for i, registeredL := range d.listeners {
 		if l == registeredL {
 			mutex.Lock()
-			listeners = append(listeners[:1], listeners[i+1:]...)
+			d.listeners = append(d.listeners[:1], d.listeners[i+1:]...)
 			mutex.Unlock()
 			return nil
 		}
