@@ -6,11 +6,39 @@ import (
 	"io/ioutil"
 	"net/http"
 
+	"github.com/gin-gonic/gin"
 	"github.com/sayden/gubsub/dispatcher"
+	"github.com/sayden/gubsub/types"
 )
 
-//StartHTTPServer will launch the http server
 func StartHTTPServer(port int) {
+	r := gin.Default()
+
+	topic := r.Group("/topic")
+	topic.POST("/:name", func(c *gin.Context) {
+		name := c.Param("name")
+		AddTopic(name)
+	})
+
+	topic.POST("/:name/message", func(c *gin.Context) {
+		name := c.Param("name")
+
+		var msg types.Message
+		err := c.BindWith(&msg, &types.MessageBinding{})
+		if err != nil {
+			msg.Topic = &name
+			dispatcher.DispatchMessage(&msg)
+			c.JSON(http.StatusOK, gin.H{"result": "Message received"})
+		} else {
+			c.JSON(http.StatusOK, gin.H{"result": err.Error()})
+		}
+	})
+
+	r.Run(fmt.Sprintf(":%d", port))
+}
+
+//StartHTTPServer will launch the http server
+func StartHTTPServer2(port int) {
 	httpServer := http.NewServeMux()
 	httpServer.HandleFunc("/topic/default", httpMessageHandler)
 	httpServer.HandleFunc("/topic", httpTopicHandler)

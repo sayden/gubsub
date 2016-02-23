@@ -23,7 +23,7 @@ func StartSocketServer(port int, endpoint string) {
 
 	go startServer(socket, port)
 
-	fmt.Printf("Listening Websocket on port %d. ", port)
+	fmt.Printf("Listening Websocket on port %d. \n", port)
 }
 
 func startServer(socket *http.ServeMux, port int) {
@@ -49,15 +49,17 @@ func socketHandler(ws *websocket.Conn, endpoint string) {
 	q := make(chan bool)
 	l := types.Listener{
 		ID:    uuid.NewV4(),
-		Ch:    c,
-		Quit:  q,
+		Ch:    &c,
+		Quit:  &q,
 		Topic: endpoint,
 	}
 
-	dispatcher.AddListener(l)
+	// dispatcher.AddListener(l)
+	dispatcher.AddListenerToTopic(l, "default")
 
 	for {
-		m := <-l.Ch
+		m := <-*l.Ch
+		fmt.Printf("Message received in listener %s and topic '%s'. Is ws connected? %t\n", l.ID, l.Topic, ws.IsClientConn())
 		ws.Write(*m)
 	}
 }

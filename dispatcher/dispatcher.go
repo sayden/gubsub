@@ -5,7 +5,6 @@ import (
 	"sync"
 
 	"github.com/sayden/gubsub/types"
-	"golang.org/x/net/websocket"
 )
 
 var mutex = &sync.Mutex{}
@@ -22,20 +21,28 @@ var d *Dispatcher
 func init() {
 	d = &Dispatcher{
 		topics:        make(map[string][]types.Listener),
-		listeners:     make([]types.Listener, 0),
-		msgDispatcher: make(chan *types.Message),
+		listeners:     make([]types.Listener, 1),
+		msgDispatcher: make(chan *types.Message, 20),
 		dispatch:      make(chan *[]byte),
 	}
-	go dispatcherLoop()
+
 	//Add default topic
 	d.AddTopic("default")
+
+	// go dispatcherLoop()
+	go d.topicDispatcherLoop()
 }
 
 func (d *Dispatcher) AddTopic(name string) error {
 	mutex.Lock()
 	d.topics[name] = make([]types.Listener, 0)
 	mutex.Unlock()
+	println(len(d.topics))
 	return nil
+}
+
+func DispatchMessage(m *types.Message) {
+	d.msgDispatcher <- m
 }
 
 //Dispatch takes a message and distributes it among registered listeners
@@ -43,21 +50,21 @@ func Dispatch(m *[]byte) {
 	d.dispatch <- m
 }
 
-func topicDispatcherLoop() {
+func (d *Dispatcher) topicDispatcherLoop() {
 	for {
 		m := <-d.msgDispatcher
-		ls := d.topics[m.Topic]
+		ls := d.topics[*m.Topic]
 		for _, l := range ls {
-			l.Ch <- m.Data
+			*l.Ch <- m.Data
 		}
 	}
 }
 
-func dispatcherLoop() {
+func (d *Dispatcher) dispatcherLoop() {
 	for {
 		m := <-d.dispatch
 		for _, l := range d.listeners {
-			l.Ch <- m
+			*l.Ch <- m
 		}
 	}
 }
@@ -75,15 +82,20 @@ func AddListener(l types.Listener) {
 	// }
 }
 
-func AddListenerToTopic(ws *websocket.Conn, l types.Listener, topic string) {
-	fmt.Printf("New listener for topic %s", topic)
+func AddListenerToTopic(l types.Listener, topic string) {
+	fmt.Printf("New listener for topic %s\n", topic)
 
 	mutex.Lock()
 	d.topics[topic] = append(d.topics[topic], l)
 	mutex.Unlock()
-	for {
-		m := <-l.Ch
-		ws.Write(*m)
+	// for {
+	// 	m := <-l.Ch
+	// 	ws.Write(*m)
+	// }
+
+	ls := d.topics[topic]
+	for _, l := range ls {
+		fmt.Printf("%s listener in topic %s\n", l.ID, l.Topic)
 	}
 }
 
