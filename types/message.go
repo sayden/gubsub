@@ -1,7 +1,6 @@
 package types
 
 import (
-	"errors"
 	"io/ioutil"
 	"net/http"
 	"time"
@@ -11,6 +10,10 @@ type Message struct {
 	Data      *[]byte
 	Timestamp time.Time
 	Topic     *string
+}
+
+type SlimMessage struct {
+	message string `json:"message"`
 }
 
 func (mb *MessageBinding) Name() string {
@@ -29,13 +32,11 @@ func (mb *MessageBinding) Bind(r *http.Request, obj interface{}) error {
 		return err
 	}
 
-	m, ok := obj.(Message)
-	if !ok {
-		return errors.New("Could not parse json")
-	}
+	m := obj.(*Message)
 
 	m.Data = &body
-	m.Timestamp = time.Now()
+
+	obj = m
 
 	return nil
 }

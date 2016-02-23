@@ -2,64 +2,28 @@ package servers
 
 import (
 	"fmt"
-	"net/http"
 
+	"github.com/olahol/melody"
 	"github.com/satori/go.uuid"
 	"github.com/sayden/gubsub/dispatcher"
 	"github.com/sayden/gubsub/types"
-
-	"golang.org/x/net/websocket"
 )
 
-var socket *http.ServeMux
-
-//StartSocketServer will launch the web socket server on the specified endpoint
-func StartSocketServer(port int, endpoint string) {
-	socket = http.NewServeMux()
-	socket.Handle(fmt.Sprintf("/%s", endpoint), websocket.Handler(
-		func(ws *websocket.Conn) {
-			socketHandler(ws, endpoint)
-		}))
-
-	go startServer(socket, port)
-
-	fmt.Printf("Listening Websocket on port %d. \n", port)
-}
-
-func startServer(socket *http.ServeMux, port int) {
-	http.ListenAndServe(fmt.Sprintf(":%d", port), socket)
-}
-
-//AddTopic register a new topic as an endpoint. Since this moment, you can post
-//messages to this new endpoint
-func AddTopic(endpoint string) error {
-	println("Adding topic", endpoint)
-	socket.Handle(fmt.Sprintf("/%s", endpoint), websocket.Handler(
-		func(ws *websocket.Conn) {
-			socketHandler(ws, endpoint)
-		}))
-	return nil
-}
-
-func socketHandler(ws *websocket.Conn, endpoint string) {
+func ClientConnected(endpoint string, s *melody.Session) {
 	fmt.Printf("Listening topic %s \n", endpoint)
 
 	//Creates new listener
-	c := make(chan *[]byte)
-	q := make(chan bool)
 	l := types.Listener{
 		ID:    uuid.NewV4(),
-		Ch:    &c,
-		Quit:  &q,
+		Ch:    make(chan *types.Message),
+		Quit:  make(chan bool),
 		Topic: endpoint,
 	}
 
-	// dispatcher.AddListener(l)
-	dispatcher.AddListenerToTopic(l, "default")
+	dispatcher.AddListenerToTopic(l, endpoint)
 
 	for {
-		m := <-*l.Ch
-		fmt.Printf("Message received in listener %s and topic '%s'. Is ws connected? %t\n", l.ID, l.Topic, ws.IsClientConn())
-		ws.Write(*m)
+		m := <-l.Ch
+		s.Write(*m.Data)
 	}
 }

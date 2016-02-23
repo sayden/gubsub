@@ -3,6 +3,7 @@ package main
 import "github.com/sayden/gubsub/servers"
 
 func main() {
-	servers.StartSocketServer(12345, "default")
-	servers.StartHTTPServer(8002)
+	// servers.StartSocketServer(12345, "default")
+	// servers.StartHTTPServer(8002)
+	servers.StartHTTPServer(8002, "default")
 }
