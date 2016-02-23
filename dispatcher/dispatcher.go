@@ -26,10 +26,8 @@ func init() {
 		dispatch:      make(chan *[]byte),
 	}
 
-	//Add default topic
 	d.AddTopic("default")
 
-	// go dispatcherLoop()
 	go d.topicDispatcherLoop()
 }
 
@@ -37,7 +35,7 @@ func (d *Dispatcher) AddTopic(name string) error {
 	mutex.Lock()
 	d.topics[name] = make([]types.Listener, 0)
 	mutex.Unlock()
-	println(len(d.topics))
+
 	return nil
 }
 
@@ -45,41 +43,14 @@ func DispatchMessage(m *types.Message) {
 	d.msgDispatcher <- m
 }
 
-//Dispatch takes a message and distributes it among registered listeners
-func Dispatch(m *[]byte) {
-	d.dispatch <- m
-}
-
 func (d *Dispatcher) topicDispatcherLoop() {
 	for {
 		m := <-d.msgDispatcher
 		ls := d.topics[*m.Topic]
 		for _, l := range ls {
-			*l.Ch <- m.Data
+			l.Ch <- m
 		}
 	}
-}
-
-func (d *Dispatcher) dispatcherLoop() {
-	for {
-		m := <-d.dispatch
-		for _, l := range d.listeners {
-			*l.Ch <- m
-		}
-	}
-}
-
-//AddListener will make a Listener to receive all incoming messages
-func AddListener(l types.Listener) {
-	println("New client")
-
-	mutex.Lock()
-	d.listeners = append(d.listeners, l)
-	mutex.Unlock()
-	// for {
-	// 	m := <-l.Ch
-	// 	ws.Write(*m)
-	// }
 }
 
 func AddListenerToTopic(l types.Listener, topic string) {
@@ -88,10 +59,6 @@ func AddListenerToTopic(l types.Listener, topic string) {
 	mutex.Lock()
 	d.topics[topic] = append(d.topics[topic], l)
 	mutex.Unlock()
-	// for {
-	// 	m := <-l.Ch
-	// 	ws.Write(*m)
-	// }
 
 	ls := d.topics[topic]
 	for _, l := range ls {
@@ -99,15 +66,20 @@ func AddListenerToTopic(l types.Listener, topic string) {
 	}
 }
 
-func RemoveListener(l types.Listener) error {
-	for i, registeredL := range d.listeners {
-		if l == registeredL {
-			mutex.Lock()
-			d.listeners = append(d.listeners[:1], d.listeners[i+1:]...)
-			mutex.Unlock()
-			return nil
+func GetAllTopics() []string {
+	var ts []string
+	for k := range d.topics {
+		ts = append(ts, k)
+	}
+	return ts
+}
+
+func GetAllListeners() []types.Listener {
+	var ls []types.Listener
+	for k := range d.topics {
+		for _, l := range d.topics[k] {
+			ls = append(ls, l)
 		}
 	}
-
-	return fmt.Errorf("Listener %d not found in pool", l.ID)
+	return ls
 }
