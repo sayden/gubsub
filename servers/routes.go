@@ -31,5 +31,5 @@ func PostMessageOnTopic(c *gin.Context) {
 
 func GetAllListeners(c *gin.Context) {
 	ls := dispatcher.GetAllListeners()
-	c.JSON(http.StatusOK, gin.H{"result": ls})
+	c.JSON(http.StatusOK, gin.H{"total": len(ls), "result": ls})
 }

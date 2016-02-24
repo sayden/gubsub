@@ -12,10 +12,6 @@ type Message struct {
 	Topic     *string
 }
 
-type SlimMessage struct {
-	message string `json:"message"`
-}
-
 func (mb *MessageBinding) Name() string {
 	return "json"
 }
