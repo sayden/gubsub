@@ -9,11 +9,15 @@ import (
 	"github.com/sayden/gubsub/types"
 )
 
+//GetAllTopics is the "GET /topic" REST handler that will return all available
+//topics in the session
 func GetAllTopics(c *gin.Context) {
 	ts := dispatcher.GetAllTopics()
 	c.JSON(http.StatusOK, gin.H{"result": ts})
 }
 
+//PostMessageOnTopic is the "POST /topic/[a topic]/message" REST handler to insert
+//messages in the queue
 func PostMessageOnTopic(c *gin.Context) {
 	name := c.Param("name")
 
@@ -29,6 +33,8 @@ func PostMessageOnTopic(c *gin.Context) {
 	}
 }
 
+//GetAllListeners is the "GET /listener" REST handler to return all connected
+//listeners
 func GetAllListeners(c *gin.Context) {
 	ls := dispatcher.GetAllListeners()
 	c.JSON(http.StatusOK, gin.H{"total": len(ls), "result": ls})

@@ -14,19 +14,12 @@ func StartHTTPServer(port int, endpoint string) {
 	m := melody.New()
 	m.Upgrader.CheckOrigin = func(r *http.Request) bool { return true }
 
-	// TOPIC endpoint handles topic creating, messages
-	// DELETE /topic/{name} Delete that specific topic
-	// POST /topic/{name}/message Adds a message to the topic dispatcher
 	topic := r.Group("/topic")
-
-	// GET /topic Returns all registered topics
 	topic.GET("/", GetAllTopics)
-
-	// POST /topic Creates a new topic
 	topic.POST("/:name/message", PostMessageOnTopic)
-
 	topic.GET("/:name", func(c *gin.Context) {
-		m.HandleRequest(c.Writer, c.Request)
+		AddClient(c.Request, c.Writer)
+		// m.HandleRequest(c.Writer, c.Request)
 	})
 
 	m.HandleConnect(func(s *melody.Session) {
@@ -34,13 +27,12 @@ func StartHTTPServer(port int, endpoint string) {
 		ClientConnected(endpoint, s)
 	})
 
-	// LISTENERS endpoint provides information about current listeners
-	// GET /listener returns all registered listeners and their topics
+	m.HandleDisconnect(func(s *melody.Session) {
+		println("Client disconnected in topic", getEndpoint(s.Request.URL.Path))
+	})
+
 	listener := r.Group("/listener")
 	listener.GET("/", GetAllListeners)
-
-	// CONFIG endpoint provides information about configuration
-	// GET /config returns information about the app
 
 	r.Run(fmt.Sprintf(":%d", port))
 }

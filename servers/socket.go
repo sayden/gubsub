@@ -2,6 +2,7 @@ package servers
 
 import (
 	"fmt"
+	"net/http"
 
 	"github.com/olahol/melody"
 	"github.com/satori/go.uuid"
@@ -26,4 +27,8 @@ func ClientConnected(endpoint string, s *melody.Session) {
 		m := <-l.Ch
 		s.Write(*m.Data)
 	}
+}
+
+func AddClient(r *http.Request, w http.ResponseWriter) {
+
 }
