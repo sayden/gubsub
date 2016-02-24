@@ -1,18 +1,15 @@
 package servers
 
 import (
-	"fmt"
 	"net/http"
 
-	"github.com/olahol/melody"
 	"github.com/satori/go.uuid"
 	"github.com/sayden/gubsub/dispatcher"
 	"github.com/sayden/gubsub/types"
+	"golang.org/x/net/websocket"
 )
 
-func ClientConnected(endpoint string, s *melody.Session) {
-	fmt.Printf("Listening topic %s \n", endpoint)
-
+func clientConnected(ws *websocket.Conn, endpoint string) {
 	//Creates new listener
 	l := types.Listener{
 		ID:    uuid.NewV4(),
@@ -25,10 +22,15 @@ func ClientConnected(endpoint string, s *melody.Session) {
 
 	for {
 		m := <-l.Ch
-		s.Write(*m.Data)
+		ws.Write(*m.Data)
 	}
 }
 
-func AddClient(r *http.Request, w http.ResponseWriter) {
-
+//AddClient must be called from HTTP endpoints with the new clients connected
+//through websocket
+func AddClient(r *http.Request, w http.ResponseWriter, endpoint string) {
+	handler := websocket.Handler(func(ws *websocket.Conn) {
+		clientConnected(ws, endpoint)
+	})
+	handler.ServeHTTP(w, r)
 }
