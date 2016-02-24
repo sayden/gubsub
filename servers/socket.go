@@ -3,6 +3,7 @@ package servers
 import (
 	"net/http"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/satori/go.uuid"
 	"github.com/sayden/gubsub/dispatcher"
 	"github.com/sayden/gubsub/types"
@@ -22,7 +23,11 @@ func clientConnected(ws *websocket.Conn, endpoint string) {
 
 	for {
 		m := <-l.Ch
-		ws.Write(*m.Data)
+		_, err := ws.Write(*m.Data)
+		if err != nil {
+			log.Error("Error trying to write on socket: ", err)
+			dispatcher.RemoveListener(l)
+		}
 	}
 }
 

@@ -92,16 +92,16 @@ func GetAllListeners() []types.Listener {
 
 //RemoveListener takes a types.Listener and a topic and removes the listener from
 //the the specified topic
-func RemoveListener(l types.Listener, topic string) error {
+func RemoveListener(l types.Listener) error {
 	mutex.Lock()
-	ls := d.topics[topic]
+	ls := d.topics[l.Topic]
 	for i, _l := range ls {
 		if l == _l {
 			ls = append(ls[:i], ls[i+1:]...)
 		}
 	}
 
-	d.topics[topic] = ls
+	d.topics[l.Topic] = ls
 	mutex.Unlock()
 
 	return nil
