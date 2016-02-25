@@ -1,7 +1,7 @@
 package main
 
-import "github.com/sayden/gubsub/servers"
+import "github.com/sayden/gubsub/cli"
 
 func main() {
-	servers.StartHTTPServer(8002, "default")
+	cli.StartCli()
 }
