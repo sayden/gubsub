@@ -2,13 +2,15 @@ package cli
 
 import (
 	"os"
-	"time"
+	//"time"
 
 	log "github.com/sayden/gubsub/Godeps/_workspace/src/github.com/Sirupsen/logrus"
 	"github.com/sayden/gubsub/Godeps/_workspace/src/github.com/codegangsta/cli"
 	"github.com/sayden/gubsub/dispatcher"
 	"github.com/sayden/gubsub/servers"
-	"github.com/sayden/gubsub/types"
+	//"github.com/sayden/gubsub/types"
+	"time"
+"github.com/sayden/gubsub/types"
 )
 
 func StartCli() {
@@ -49,7 +51,7 @@ func StartCli() {
 		{
 			Name:    "dispatch",
 			Aliases: []string{"d"},
-			Usage:   "Dispatchs a message to the connected listeners",
+			Usage:   "dispatch [topic] [message]",
 			Action: func(c *cli.Context) {
 				data := []byte(c.Args()[1])
 				topic := c.Args()[0]

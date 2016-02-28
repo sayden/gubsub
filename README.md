@@ -44,7 +44,7 @@ $ gubsub listeners
 
 #### Dispatch a message
 ```bash
-$ gubsub dispatch -t topic [content]
+$ gubsub dispatch [topic] [message]
 ```
 
 ## Contributing
