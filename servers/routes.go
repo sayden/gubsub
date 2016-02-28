@@ -27,7 +27,7 @@ func PostMessageOnTopic(c *gin.Context) {
 	var msg types.Message
 	err := c.BindWith(&msg, &types.MessageBinding{})
 	if err != nil {
-		c.JSON(http.StatusNotAcceptable, gin.H{"result": err.Error()})
+		c.JSON(http.StatusNotAcceptable, gin.H{"error": err.Error()})
 	} else {
 		msg.Topic = &name
 		msg.Timestamp = time.Now()
@@ -43,21 +43,50 @@ func GetAllListeners(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"total": len(ls), "result": ls})
 }
 
+//CretaeNewHTTPListener will add to the listeners queue a new listener that will
+//execute an HTTP request to a specified point
 func CreateNewHTTPListener(c *gin.Context) {
 	endpoint := c.Param("endpoint")
 
-	var msg types.HTTPListenerData
+	var msg types.HTTPListener
 	err := c.BindJSON(&msg)
 	if err != nil {
 		log.Error("Couldn't parse json", err)
-		c.JSON(http.StatusNotAcceptable, gin.H{"result": err.Error()})
+		c.JSON(http.StatusNotAcceptable, gin.H{"error": err.Error()})
 	} else {
 		var id uuid.UUID
 		listener.NewHTTPListener(msg, &endpoint, &id)
 		if &id != nil {
-			c.JSON(http.StatusOK, gin.H{"result": id})
+			c.JSON(http.StatusOK, gin.H{"result": id.String()})
 		} else {
-			c.JSON(http.StatusNotAcceptable, gin.H{"result": err.Error()})
+			c.JSON(http.StatusNotAcceptable, gin.H{"error": err.Error()})
 		}
 	}
+}
+
+//CreateNewFileListener will add to the listener queue a new listener that will
+// write to a file
+func CreateNewFileListener(c *gin.Context) {
+	endpoint := c.Param("endpoint")
+
+	var msg types.FileListener
+	err := c.BindJSON(&msg)
+	if err != nil {
+		log.Error("Couldn't parse json", err)
+		c.JSON(http.StatusNotAcceptable, gin.H{"error": err.Error()})
+	} else {
+		id, err := listener.NewFileListener(msg, &endpoint)
+		if err != nil {
+			log.WithFields(log.Fields{
+				"error":err.Error(),
+				"id": id.String(),
+			}).Error("Error creating file")
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": "Error creating file",
+			})
+		} else {
+			c.JSON(http.StatusOK, gin.H{"result": id.String()})
+		}
+	}
+
 }

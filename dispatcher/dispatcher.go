@@ -59,14 +59,14 @@ func (d *dispatcher) topicDispatcherLoop() {
 
 //AddListenerToTopic will add a listener to one of the topic's arrays so it can
 //be notified since that moment of new messages
-func AddListenerToTopic(l types.Listener, topic string) {
+func AddListenerToTopic(l *types.Listener, topic *string) {
 	log.WithFields(log.Fields{
 		"ID":    l.ID,
-		"topic": topic,
+		"topic": *topic,
 	}).Info("New listener")
 
 	mutex.Lock()
-	d.topics[topic] = append(d.topics[topic], l)
+	d.topics[*topic] = append(d.topics[*topic], *l)
 	mutex.Unlock()
 }
 
@@ -92,11 +92,11 @@ func GetAllListeners() []types.Listener {
 
 //RemoveListener takes a types.Listener and a topic and removes the listener from
 //the the specified topic
-func RemoveListener(l types.Listener) error {
+func RemoveListener(l *types.Listener) error {
 	mutex.Lock()
 	ls := d.topics[l.Topic]
 	for i, _l := range ls {
-		if l == _l {
+		if *l == _l {
 			ls = append(ls[:i], ls[i+1:]...)
 		}
 	}

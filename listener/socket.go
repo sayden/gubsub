@@ -2,7 +2,6 @@ package listener
 
 import (
 	log "github.com/Sirupsen/logrus"
-	"github.com/satori/go.uuid"
 	"github.com/sayden/gubsub/dispatcher"
 	"github.com/sayden/gubsub/types"
 	"golang.org/x/net/websocket"
@@ -12,14 +11,9 @@ import (
 //through websocket. It will configure and make it ready to receive messages
 func NewSocketListener(ws *websocket.Conn, endpoint *string) {
 	//Creates new listener
-	l := types.Listener{
-		ID:    uuid.NewV4(),
-		Ch:    make(chan *types.Message),
-		Quit:  make(chan bool),
-		Topic: *endpoint,
-	}
+	l := types.NewListener(endpoint)
 
-	dispatcher.AddListenerToTopic(l, *endpoint)
+	dispatcher.AddListenerToTopic(l, endpoint)
 
 	for {
 		m := <-l.Ch

@@ -26,7 +26,8 @@ func StartHTTPServer(port int, endpoint string) {
 
 	listener := r.Group("/listener")
 	listener.GET("/", GetAllListeners)
-	listener.POST("/new/topic/:endpoint", CreateNewHTTPListener)
+	listener.POST("/http/topic/:endpoint", CreateNewHTTPListener)
+	listener.POST("/file/topic/:endpoint", CreateNewFileListener)
 
 	r.Run(fmt.Sprintf(":%d", port))
 }

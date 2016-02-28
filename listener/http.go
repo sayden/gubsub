@@ -14,7 +14,7 @@ import (
 
 //NewHTTPGETListener must be called to create a new listener that will execute
 //an HTTP method to a given URL
-func NewHTTPListener(msg types.HTTPListenerData, endpoint *string, id *uuid.UUID) {
+func NewHTTPListener(msg types.HTTPListener, endpoint *string, id *uuid.UUID) {
 	_, err := url.Parse(msg.TargetURL)
 	if err != nil {
 		log.WithFields(log.Fields{
@@ -24,22 +24,17 @@ func NewHTTPListener(msg types.HTTPListenerData, endpoint *string, id *uuid.UUID
 	}
 
 	//Creates new listener
-	l := types.Listener{
-		ID:    uuid.NewV4(),
-		Ch:    make(chan *types.Message),
-		Quit:  make(chan bool),
-		Topic: *endpoint,
-	}
+	l := types.NewListener(endpoint)
 
 	*id = l.ID
 
-	dispatcher.AddListenerToTopic(l, *endpoint)
+	dispatcher.AddListenerToTopic(l, endpoint)
 
-	go launchHTTPResponder(&l, &msg)
+	go launchHTTPResponder(l, &msg)
 
 }
 
-func launchHTTPResponder(l *types.Listener, msg *types.HTTPListenerData) {
+func launchHTTPResponder(l *types.Listener, msg *types.HTTPListener) {
 	r, err := http.NewRequest(msg.Method, msg.TargetURL, nil)
 	if err != nil {
 		log.WithFields(log.Fields{
