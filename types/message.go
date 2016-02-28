@@ -29,9 +29,7 @@ func (mb *MessageBinding) Bind(r *http.Request, obj interface{}) error {
 	}
 
 	m := obj.(*Message)
-
 	m.Data = &body
-
 	obj = m
 
 	return nil

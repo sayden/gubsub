@@ -26,6 +26,7 @@ func StartHTTPServer(port int, endpoint string) {
 
 	listener := r.Group("/listener")
 	listener.GET("/", GetAllListeners)
+	listener.POST("/new/topic/:endpoint", CreateNewHTTPListener)
 
 	r.Run(fmt.Sprintf(":%d", port))
 }
