@@ -4,8 +4,8 @@ import (
 	"os"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
-	"github.com/codegangsta/cli"
+	log "github.com/sayden/gubsub/Godeps/_workspace/src/github.com/Sirupsen/logrus"
+	"github.com/sayden/gubsub/Godeps/_workspace/src/github.com/codegangsta/cli"
 	"github.com/sayden/gubsub/dispatcher"
 	"github.com/sayden/gubsub/servers"
 	"github.com/sayden/gubsub/types"

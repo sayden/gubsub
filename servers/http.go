@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/gin-gonic/gin"
-	"github.com/olahol/melody"
+	"github.com/sayden/gubsub/Godeps/_workspace/src/github.com/gin-gonic/gin"
+	"github.com/sayden/gubsub/Godeps/_workspace/src/github.com/olahol/melody"
 )
 
 //StartHTTPServer is the starting point of the application. It is called from

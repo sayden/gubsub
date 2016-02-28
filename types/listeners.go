@@ -1,7 +1,7 @@
 package types
 
 import (
-	"github.com/satori/go.uuid"
+	"github.com/sayden/gubsub/Godeps/_workspace/src/github.com/satori/go.uuid"
 )
 
 //Listener struct must hold the information needed by any type of listener
@@ -26,7 +26,7 @@ type FileListener struct {
 	Path string `json:"path"`
 }
 
-func NewListener(topic *string) *Listener{
+func NewListener(topic *string) *Listener {
 	return &Listener{
 		ID:    uuid.NewV4(),
 		Ch:    make(chan *Message),

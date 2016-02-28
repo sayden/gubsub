@@ -3,8 +3,8 @@ package listener
 import (
 	"os"
 
-	log "github.com/Sirupsen/logrus"
-	"github.com/satori/go.uuid"
+	log "github.com/sayden/gubsub/Godeps/_workspace/src/github.com/Sirupsen/logrus"
+	"github.com/sayden/gubsub/Godeps/_workspace/src/github.com/satori/go.uuid"
 	"github.com/sayden/gubsub/dispatcher"
 	"github.com/sayden/gubsub/types"
 	"time"
@@ -25,7 +25,7 @@ func NewFileListener(filePath types.FileListener, topic *string) (*uuid.UUID, er
 	return &l.ID, nil
 }
 
-func launchFileWriterGoroutine(l *types.Listener, f *os.File, filePath *types.FileListener){
+func launchFileWriterGoroutine(l *types.Listener, f *os.File, filePath *types.FileListener) {
 
 	var sync, quit chan bool
 	go SyncWrite(sync, 5, quit)

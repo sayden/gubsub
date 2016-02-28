@@ -3,7 +3,7 @@ package dispatcher
 import (
 	"sync"
 
-	log "github.com/Sirupsen/logrus"
+	log "github.com/sayden/gubsub/Godeps/_workspace/src/github.com/Sirupsen/logrus"
 	"github.com/sayden/gubsub/types"
 )
 

@@ -4,12 +4,12 @@ import (
 	"net/http"
 	"net/url"
 
-	log "github.com/Sirupsen/logrus"
-	"github.com/satori/go.uuid"
+	"bytes"
+	log "github.com/sayden/gubsub/Godeps/_workspace/src/github.com/Sirupsen/logrus"
+	"github.com/sayden/gubsub/Godeps/_workspace/src/github.com/satori/go.uuid"
 	"github.com/sayden/gubsub/dispatcher"
 	"github.com/sayden/gubsub/types"
-	"bytes"
-"io/ioutil"
+	"io/ioutil"
 )
 
 //NewHTTPGETListener must be called to create a new listener that will execute
