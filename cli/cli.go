@@ -7,17 +7,20 @@ import (
 	log "github.com/sayden/gubsub/Godeps/_workspace/src/github.com/Sirupsen/logrus"
 	"github.com/sayden/gubsub/Godeps/_workspace/src/github.com/codegangsta/cli"
 	"github.com/sayden/gubsub/dispatcher"
+	"github.com/sayden/gubsub/serfin"
 	"github.com/sayden/gubsub/servers"
 	//"github.com/sayden/gubsub/types"
+
 	"time"
-"github.com/sayden/gubsub/types"
-	"fmt"
+
+	"github.com/sayden/gubsub/types"
 )
 
 func StartCli() {
 	app := cli.NewApp()
 	app.Name = "Gubsub"
 	app.Usage = "A very simple yet powerful real-time message broker"
+
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
 			Name:  "topic, t",
@@ -30,6 +33,7 @@ func StartCli() {
 			Usage: "Sets the broker port",
 		},
 	}
+
 	app.Commands = []cli.Command{
 		{
 			Name:    "topics",
@@ -64,8 +68,8 @@ func StartCli() {
 			},
 		},
 		{
-			Name:    "server",
-			Usage:   "Start the publish subscribing server",
+			Name:  "server",
+			Usage: "Start the publish subscribing server",
 			Action: func(c *cli.Context) {
 				port := c.Int("port")
 				topic := c.String("topic")
@@ -78,6 +82,7 @@ func StartCli() {
 				}
 
 				servers.StartHTTPServer(port, topic)
+				serfin.StartSerf()
 			},
 		},
 	}
