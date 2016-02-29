@@ -11,6 +11,7 @@ import (
 	//"github.com/sayden/gubsub/types"
 	"time"
 "github.com/sayden/gubsub/types"
+	"fmt"
 )
 
 func StartCli() {
@@ -62,12 +63,24 @@ func StartCli() {
 				})
 			},
 		},
+		{
+			Name:    "server",
+			Usage:   "Start the publish subscribing server",
+			Action: func(c *cli.Context) {
+				port := c.Int("port")
+				topic := c.String("topic")
+				if port == 0 {
+					port = 8300
+				}
+
+				if topic == "" {
+					topic = "default"
+				}
+
+				servers.StartHTTPServer(port, topic)
+			},
+		},
 	}
 
-	app.Action = func(c *cli.Context) {
-		port := c.Int("port")
-		topic := c.String("topic")
-		servers.StartHTTPServer(port, topic)
-	}
 	app.Run(os.Args)
 }
