@@ -16,38 +16,37 @@
 
 // Package serfin bundles up serf functions for goiardi.
 package serfin
-//
-//import (
-//	"encoding/json"
-//	"os"
-//
-//	log "github.com/Sirupsen/logrus"
-//	serfclient "github.com/hashicorp/serf/client"
-//)
-//
+
+import (
+	"os"
+
+	log "github.com/Sirupsen/logrus"
+	serfclient "github.com/hashicorp/serf/client"
+)
+
 //// Serfer is the common serf client for gubsub.
-//var Serfer *serfclient.RPCClient
+var Serfer *serfclient.RPCClient
+
 //
-//// StartSerfin sets up the serf instance and starts listening for events and
-//// queries from other serf instances.
-//func StartSerfin() error {
-//	var err error
-//	Serfer, err = serfclient.NewRPCClient(Conf.SerfAddr)
-//	if err != nil {
-//		log.Fatal(err.Error())
-//		os.Exit(1)
-//	}
-//
-//	if Conf.SerfEventAnnounce {
-//		err = Serfer.UserEvent("gubsub-join", []byte(Conf.Hostname), true)
-//		if err != nil {
-//			log.Fatal(err.Error())
-//			os.Exit(1)
-//		}
-//	}
-//
-//	return nil
-//}
+// StartSerfin sets up the serf instance and starts listening for events and
+// queries from other serf instances.
+func StartSerfin() error {
+	var err error
+	Serfer, err = serfclient.NewRPCClient("localhost:7946")
+	if err != nil {
+		log.Fatal(err.Error())
+		os.Exit(1)
+	}
+
+	err = Serfer.UserEvent("gubsub-join", []byte("localhost:7946"), true)
+	if err != nil {
+		log.Fatal(err.Error())
+		os.Exit(1)
+	}
+
+	return nil
+}
+
 //
 //// SendEvent sends a serf event out from gubsub.
 //func SendEvent(eventName string, payload interface{}) {
