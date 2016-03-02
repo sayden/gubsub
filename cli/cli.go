@@ -15,6 +15,8 @@ import (
 	"os/signal"
 	"syscall"
 
+	"fmt"
+
 	"github.com/sayden/gubsub/types"
 )
 
@@ -93,11 +95,22 @@ func StartCli() {
 					},
 				},
 				{
-					Name:  "join",
-					Usage: "Tell Serf agent to join cluster",
+					Name:        "join",
+					Usage:       "joinTell Serf agent to join cluster",
+					Description: "Pass a --server [server:port] as the server you want to connect to",
+					Flags: []cli.Flag{
+						cli.StringFlag{
+							Name:  "server, s",
+							Usage: "Sets the server url and port",
+						},
+					},
 					Action: func(c *cli.Context) {
-						//TODO Serf join command
-						err := serfin.JoinSerfin()
+						targetServer := c.String("server")
+						if targetServer == "" {
+							log.Fatal("You have to provide a --server flag")
+						}
+
+						err := serfin.Join(targetServer)
 						if err != nil {
 							log.Error("Could not join cluster", err)
 						} else {
@@ -109,8 +122,13 @@ func StartCli() {
 					Name:  "members",
 					Usage: "Lists the members of a Serf cluster",
 					Action: func(c *cli.Context) {
-						//TODO Serf members command
-						log.Info("Not implemented yet")
+						members, err := serfin.ListMembers()
+						if err != nil {
+							log.Fatal("Error trying to get member list:")
+						}
+						for _, v := range members {
+							log.Info(fmt.Sprintf("Name: %s, Addr: %s, Port: %d, Status: %s", v.Name, v.Addr, v.Port, v.Status))
+						}
 					},
 				},
 				{
@@ -121,28 +139,37 @@ func StartCli() {
 						log.Info("Not implemented yet")
 					},
 				},
-				{
-					Name:  "version",
-					Usage: "Prints the Serf version",
-					Action: func(c *cli.Context) {
-						//TODO Serf version command
-						log.Info("Not implemented yet")
-					},
-				},
 			},
 		},
 		{
 			Name:  "server",
 			Usage: "Start the publish subscribing server",
+			Flags: []cli.Flag{
+				cli.StringFlag{
+					Name:  "join, j",
+					Usage: "Sets the server url and port",
+				},
+			},
 			Action: func(c *cli.Context) {
 				port := c.GlobalInt("port")
 				topic := c.GlobalString("topic")
+				join := c.String("join")
+
 				if port == 0 {
 					port = 8300
 				}
 
 				if topic == "" {
 					topic = "default"
+				}
+
+				//Directly join to a different server. This could be improved
+				if join != "" {
+					go func(s string){
+						log.Debug("Trying to connect to %s server", s)
+						time.Sleep(5 * time.Second)
+						serfin.Join(s)
+					}(join)
 				}
 
 				go serfin.StartSerf()
@@ -167,6 +194,6 @@ func signalCapture() {
 		log.Info("Shutting down Gubsub. Waiting 5 seconds")
 		time.Sleep(5 * time.Second)
 		log.Info("Waited for 5 seconds. Bye!")
-		panic("Signal to close Gubsub")
+		os.Exit(0)
 	}
 }

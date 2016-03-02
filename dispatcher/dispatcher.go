@@ -4,6 +4,7 @@ import (
 	"sync"
 
 	log "github.com/sayden/gubsub/Godeps/_workspace/src/github.com/Sirupsen/logrus"
+	serfclient "github.com/hashicorp/serf/client"
 	"github.com/sayden/gubsub/types"
 )
 
@@ -16,7 +17,10 @@ type dispatcher struct {
 	dispatch      chan *[]byte
 }
 
+type Servers []serfclient.Member
+
 var d *dispatcher
+var servers Servers
 
 func init() {
 	d = &dispatcher{
@@ -29,6 +33,12 @@ func init() {
 	d.AddTopic("default")
 
 	go d.topicDispatcherLoop()
+}
+
+func AddServers(servers Servers){
+	mutex.Lock()
+	servers = servers
+	mutex.Unlock()
 }
 
 //AddTopic adds a new topic to be available to listeners. It will expose a new
