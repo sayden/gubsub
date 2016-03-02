@@ -7,6 +7,7 @@ import (
 	serfclient "github.com/hashicorp/serf/client"
 	"github.com/hashicorp/serf/command/agent"
 	"github.com/mitchellh/cli"
+	"fmt"
 )
 
 //// Serfer is the common serf client for gubsub.
@@ -23,13 +24,9 @@ func StartSerf() {
 }
 
 func Join(targetServer string) error {
-	var err error
-	if serf == nil {
-		serf, err = serfclient.NewRPCClient("localhost:7373")
-		if err != nil {
-			log.Fatal(err.Error())
-			os.Exit(1)
-		}
+	serf, err := getSerfClient()
+	if err != nil {
+		return err
 	}
 
 	server := make([]string, 1)
@@ -40,9 +37,8 @@ func Join(targetServer string) error {
 }
 
 func ListMembers() ([]serfclient.Member, error) {
-	serf, err := serfclient.NewRPCClient("127.0.0.1:7373")
+	serf, err := getSerfClient()
 	if err != nil {
-		log.Error(err)
 		return nil, err
 	}
 
@@ -50,10 +46,26 @@ func ListMembers() ([]serfclient.Member, error) {
 }
 
 func GetIP() (string, error){
+	serf, err := getSerfClient()
+	if err != nil {
+		return "", err
+	}
 
+	stats, two, three, four := serf.ListKeys()
+
+	if err != nil {
+		return "", err
+	}
+
+	log.Info(stats)
+	log.Info(two)
+	log.Info(three)
+	fmt.Printf("%+v\n", three)
+	log.Info(four)
+	return "", nil
 }
 
-func getSerfClient() (serfclient.RPCClient, error) {
+func getSerfClient() (*serfclient.RPCClient, error) {
 	var err error
 	if serf == nil {
 		serf, err = serfclient.NewRPCClient("localhost:7373")
@@ -62,4 +74,6 @@ func getSerfClient() (serfclient.RPCClient, error) {
 			os.Exit(1)
 		}
 	}
+
+	return serf, nil
 }
