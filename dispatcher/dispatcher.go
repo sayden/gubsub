@@ -6,6 +6,8 @@ import (
 	log "github.com/sayden/gubsub/Godeps/_workspace/src/github.com/Sirupsen/logrus"
 	serfclient "github.com/hashicorp/serf/client"
 	"github.com/sayden/gubsub/types"
+	"time"
+	"github.com/sayden/gubsub/serfin"
 )
 
 var mutex = &sync.Mutex{}
@@ -33,12 +35,22 @@ func init() {
 	d.AddTopic("default")
 
 	go d.topicDispatcherLoop()
+	go refreshDispatcherLoop()
 }
 
-func AddServers(servers Servers){
-	mutex.Lock()
-	servers = servers
-	mutex.Unlock()
+func refreshDispatcherLoop(){
+	for {
+		time.Sleep(5 * time.Second)
+		log.Info("Current member list is %+v", servers)
+		_, ms, err := serfin.GetIPs()
+		if err != nil {
+			log.Error("Could not get local IP", err)
+		}
+
+		mutex.Lock()
+		servers = ms
+		mutex.Unlock()
+	}
 }
 
 //AddTopic adds a new topic to be available to listeners. It will expose a new

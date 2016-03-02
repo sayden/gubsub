@@ -47,10 +47,10 @@ func ListMembers() ([]serfclient.Member, error) {
 	return serf.Members()
 }
 
-func GetIP() (string, error) {
+func GetIPs() (string, []serfclient.Member, error) {
 	ifaces, err := net.Interfaces()
 	if err != nil {
-		return "", err
+		return "", nil, err
 	}
 
 	var ips []string
@@ -75,17 +75,17 @@ func GetIP() (string, error) {
 	serf, err := getSerfClient()
 	members, err := serf.Members()
 	if err != nil {
-		return "", err
+		return "", nil, err
 	}
 	for _, m := range members {
-		for _, ip := range ips {
+		for k, ip := range ips {
 			if m.Addr.String() == ip {
-				return ip, nil
+				return ip, append(members[:k], members[k+1:]...), nil
 			}
 		}
 	}
 
-	return "", errors.New("Could not find the local ip")
+	return "", nil, errors.New("Could not find the local ip")
 }
 
 func getSerfClient() (*serfclient.RPCClient, error) {
