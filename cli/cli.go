@@ -92,7 +92,6 @@ func StartCli() {
 					Action: func(c *cli.Context) {
 						//TODO Serf event command
 						log.Info("Not implemented yet")
-						serfin.GetIP()
 					},
 				},
 				{

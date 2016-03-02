@@ -3,11 +3,13 @@ package serfin
 import (
 	"os"
 
+	"errors"
+	"net"
+
 	log "github.com/Sirupsen/logrus"
 	serfclient "github.com/hashicorp/serf/client"
 	"github.com/hashicorp/serf/command/agent"
 	"github.com/mitchellh/cli"
-	"fmt"
 )
 
 //// Serfer is the common serf client for gubsub.
@@ -45,24 +47,45 @@ func ListMembers() ([]serfclient.Member, error) {
 	return serf.Members()
 }
 
-func GetIP() (string, error){
+func GetIP() (string, error) {
+	ifaces, err := net.Interfaces()
+	if err != nil {
+		return "", err
+	}
+
+	var ips []string
+	for _, i := range ifaces {
+		addrs, err := i.Addrs()
+		if err != nil {
+			log.Error("Error getting address", err)
+		}
+		for _, addr := range addrs {
+			var ip net.IP
+			switch v := addr.(type) {
+			case *net.IPNet:
+				ip = v.IP
+			case *net.IPAddr:
+				ip = v.IP
+			}
+
+			ips = append(ips, ip.String())
+		}
+	}
+
 	serf, err := getSerfClient()
+	members, err := serf.Members()
 	if err != nil {
 		return "", err
 	}
-
-	stats, two, three, four := serf.ListKeys()
-
-	if err != nil {
-		return "", err
+	for _, m := range members {
+		for _, ip := range ips {
+			if m.Addr.String() == ip {
+				return ip, nil
+			}
+		}
 	}
 
-	log.Info(stats)
-	log.Info(two)
-	log.Info(three)
-	fmt.Printf("%+v\n", three)
-	log.Info(four)
-	return "", nil
+	return "", errors.New("Could not find the local ip")
 }
 
 func getSerfClient() (*serfclient.RPCClient, error) {
