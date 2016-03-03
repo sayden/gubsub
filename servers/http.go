@@ -2,10 +2,8 @@ package servers
 
 import (
 	"fmt"
-	"net/http"
 
 	"github.com/sayden/gubsub/Godeps/_workspace/src/github.com/gin-gonic/gin"
-	"github.com/sayden/gubsub/Godeps/_workspace/src/github.com/olahol/melody"
 )
 
 //StartHTTPServer is the starting point of the application. It is called from
@@ -13,8 +11,6 @@ import (
 //"default" endpoint to receive messages
 func StartHTTPServer(port int, endpoint string) {
 	r := gin.Default()
-	m := melody.New()
-	m.Upgrader.CheckOrigin = func(r *http.Request) bool { return true }
 
 	topic := r.Group("/topic")
 	topic.GET("/", GetAllTopics)
