@@ -12,5 +12,5 @@ message GubsubMessage {
 }
 
 message GubsubReply {
-    bytes statusCode = 1;
+    int32 statusCode = 1;
 }

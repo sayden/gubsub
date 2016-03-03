@@ -7,7 +7,7 @@ import (
 	log "github.com/sayden/gubsub/Godeps/_workspace/src/github.com/Sirupsen/logrus"
 	"github.com/sayden/gubsub/Godeps/_workspace/src/github.com/codegangsta/cli"
 	"github.com/sayden/gubsub/dispatcher"
-	"github.com/sayden/gubsub/serfin"
+	"github.com/sayden/gubsub/serf"
 	"github.com/sayden/gubsub/servers"
 
 	"time"
@@ -18,7 +18,6 @@ import (
 	"fmt"
 
 	"github.com/sayden/gubsub/types"
-	"github.com/sayden/gubsub/grpc"
 )
 
 func StartCli() {
@@ -75,11 +74,11 @@ func StartCli() {
 			Action: func(c *cli.Context) {
 				data := []byte(c.Args()[1])
 				topic := c.Args()[0]
-				dispatcher.DispatchMessage(&types.Message{
-					Data:      &data,
-					Topic:     &topic,
-					Timestamp: time.Now(),
-				})
+				servers.RPC.SendMessage(&types.Message{
+						Data:      &data,
+						Topic:     &topic,
+						Timestamp: time.Now(),
+					})
 			},
 		},
 		{
@@ -111,7 +110,7 @@ func StartCli() {
 							log.Fatal("You have to provide a --server flag")
 						}
 
-						err := serfin.Join(targetServer)
+						err := serf.Join(targetServer)
 						if err != nil {
 							log.Error("Could not join cluster", err)
 						} else {
@@ -123,7 +122,7 @@ func StartCli() {
 					Name:  "members",
 					Usage: "Lists the members of a Serf cluster",
 					Action: func(c *cli.Context) {
-						members, err := serfin.ListMembers()
+						members, err := serf.ListMembers()
 						if err != nil {
 							log.Fatal("Error trying to get member list:")
 						}
@@ -169,11 +168,11 @@ func StartCli() {
 					go func(s string){
 						log.Debug("Trying to connect to %s server", s)
 						time.Sleep(5 * time.Second)
-						serfin.Join(s)
+						serf.Join(s)
 					}(join)
 				}
 
-				go serfin.StartSerf()
+				go serf.StartSerf()
 				servers.StartHTTPServer(port, topic)
 				//gRPC server is started automatically using init() function
 			},

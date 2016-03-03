@@ -11,7 +11,7 @@ import (
 )
 
 func NewFileListener(filePath types.FileListener, topic *string) (*uuid.UUID, error) {
-	f, err := os.OpenFile(filePath.Path, os.O_APPEND|os.O_WRONLY, os.ModeAppend)
+	f, err := os.Create(filePath.Path)
 	if err != nil {
 		return nil, err
 	}

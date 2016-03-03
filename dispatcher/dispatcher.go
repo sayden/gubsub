@@ -5,7 +5,7 @@ import (
 
 	serfclient "github.com/hashicorp/serf/client"
 	log "github.com/sayden/gubsub/Godeps/_workspace/src/github.com/Sirupsen/logrus"
-	"github.com/sayden/gubsub/serfin"
+	"github.com/sayden/gubsub/serf"
 	"github.com/sayden/gubsub/types"
 	"time"
 )
@@ -13,10 +13,11 @@ import (
 var mutex = &sync.Mutex{}
 
 type dispatcher struct {
-	topics        map[string][]types.Listener
-	listeners     []types.Listener
-	msgDispatcher chan *types.Message
-	dispatch      chan *[]byte
+	topics            map[string][]types.Listener
+	listeners         []types.Listener
+	msgDispatcher     chan *types.Message
+	clusterDispatcher chan *types.Message
+	dispatch          chan *[]byte
 }
 
 type Servers []serfclient.Member
@@ -29,6 +30,7 @@ func init() {
 		topics:        make(map[string][]types.Listener),
 		listeners:     make([]types.Listener, 1),
 		msgDispatcher: make(chan *types.Message, 20),
+		clusterDispatcher: make(chan *types.Message, 100),
 		dispatch:      make(chan *[]byte),
 	}
 
@@ -41,10 +43,9 @@ func init() {
 func refreshMemberListLoop() {
 	for {
 		time.Sleep(5 * time.Second)
-		log.Info("Current member list is %+v", servers)
-		_, ms, err := serfin.GetIPs()
+		_, ms, err := serf.GetIPs()
 		if err != nil {
-			log.Error("Could not get local IP", err)
+			log.Error(err)
 		}
 
 		mutex.Lock()
@@ -64,8 +65,15 @@ func (d *dispatcher) AddTopic(name string) error {
 }
 
 //DispatchMessage takes a message and inserts it into the generic messages channel
-//that will distribute it to the registered listeners
+//that will distribute it to the registered servers
 func DispatchMessage(m *types.Message) {
+	d.clusterDispatcher <- m
+	go DispatchMessageLocal(m)
+}
+
+//DispatchMessageLocal takes a message and inserts it into the generic messages
+// channel that will distribute it to the registered listeners
+func DispatchMessageLocal(m *types.Message) {
 	d.msgDispatcher <- m
 }
 
@@ -78,6 +86,7 @@ func (d *dispatcher) topicDispatcherLoop() {
 		}
 	}
 }
+
 //AddListenerToTopic will add a listener to one of the topic's arrays so it can
 //be notified since that moment of new messages
 func AddListenerToTopic(l *types.Listener, topic *string) {

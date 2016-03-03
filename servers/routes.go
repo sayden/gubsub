@@ -79,7 +79,6 @@ func CreateNewFileListener(c *gin.Context) {
 		if err != nil {
 			log.WithFields(log.Fields{
 				"error": err.Error(),
-				"id":    id.String(),
 			}).Error("Error creating file")
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"error": "Error creating file",

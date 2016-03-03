@@ -1,54 +1,60 @@
 package servers
 
 import (
-	"github.com/sayden/gubsub/grpc"
-	"golang.org/x/net/context"
-	"net"
-	log "github.com/Sirupsen/logrus"
-	"github.com/docker/docker/vendor/src/google.golang.org/grpc"
-	"github.com/sayden/gubsub/types"
 	"fmt"
-"time"
+	"net"
+	"time"
+
+	log "github.com/Sirupsen/logrus"
 	"github.com/sayden/gubsub/dispatcher"
+	"github.com/sayden/gubsub/grpc"
+	"github.com/sayden/gubsub/types"
+	"golang.org/x/net/context"
+	"google.golang.org/grpc"
 )
 
 // server is used to implement helloworld.GreeterServer.
-type rpc_server struct{
+type rpc_server struct {
 	Port int
 }
 
-var Server rpc_server
+var RPC rpc_server
 
-func init(){
-	Server = rpc_server{
-		Port:5123,
+func init() {
+	RPC = rpc_server{
+		Port: 5123,
 	}
-}
 
+	go func(){
+		time.Sleep(2 * time.Second)
+		RPC.StartServer()
+	}()
+}
 
 //NewMessage is the implementation to receive a new message across the cluster
 func (s *rpc_server) NewMessage(ctx context.Context, in *grpcservice.GubsubMessage) (*grpcservice.GubsubReply, error) {
 	m := types.Message{
-		Data:&in.M,
-		Topic:&in.T,
-		Timestamp:time.Now(),
+		Data:      &in.M,
+		Topic:     &in.T,
+		Timestamp: time.Now(),
 	}
 
-	dispatcher.DispatchMessage(&m)
-	return &grpcservice.GubsubReply{StatusCode:0}, nil
+	dispatcher.DispatchMessageLocal(&m)
+	return &grpcservice.GubsubReply{StatusCode: 0}, nil
 }
 
-func (s *rpc_server) StartServer(port int){
-	lis, err := net.Listen("tcp", port)
+func (s *rpc_server) StartServer() {
+	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", s.Port))
 	if err != nil {
-		log.Error("failed to listen: %v", err)
+		log.Error("Failed starting server: failed to listen:", err)
 	}
-	s := grpc.NewServer()
-	grpcservice.RegisterMessageServiceServer(s, &rpc_server{})
-	s.Serve(lis)
+
+	server := grpc.NewServer()
+	grpcservice.RegisterMessageServiceServer(server, &rpc_server{})
+	server.Serve(lis)
 }
 
-func (s *rpc_server) SendMessage(m types.Message) (int, error){
+func (s *rpc_server) SendMessage(m *types.Message) (int32, error) {
 	// Set up a connection to the server.
 	conn, err := grpc.Dial(fmt.Sprintf("localhost:%d", s.Port), grpc.WithInsecure())
 	if err != nil {
@@ -57,14 +63,14 @@ func (s *rpc_server) SendMessage(m types.Message) (int, error){
 	defer conn.Close()
 	c := grpcservice.NewMessageServiceClient(conn)
 
-	r, err := c.NewMessage(context.Background(), grpcservice.GubsubMessage{
-		M:*m.Data,
-		T:*m.Topic,
+	r, err := c.NewMessage(context.Background(), &grpcservice.GubsubMessage{
+		M: *m.Data,
+		T: *m.Topic,
 	})
 
 	if err != nil {
-		return err
+		return -1, err
 	}
 
-	return r, nil
+	return r.StatusCode, nil
 }
