@@ -47,7 +47,9 @@ func ListMembers() ([]serfclient.Member, error) {
 	return serf.Members()
 }
 
-func GetIPs() (string, []serfclient.Member, error) {
+//GetIPs will give you your own Member object in the cluster, the rest of the
+//cluster members or an erro
+func GetIPs() (serfclient.Member, []serfclient.Member, error) {
 	ifaces, err := net.Interfaces()
 	if err != nil {
 		return "", nil, err
@@ -80,7 +82,7 @@ func GetIPs() (string, []serfclient.Member, error) {
 	for _, m := range members {
 		for k, ip := range ips {
 			if m.Addr.String() == ip {
-				return ip, append(members[:k], members[k+1:]...), nil
+				return m, append(members[:k], members[k+1:]...), nil
 			}
 		}
 	}

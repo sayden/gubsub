@@ -18,6 +18,7 @@ import (
 	"fmt"
 
 	"github.com/sayden/gubsub/types"
+	"github.com/sayden/gubsub/grpc"
 )
 
 func StartCli() {
@@ -174,6 +175,7 @@ func StartCli() {
 
 				go serfin.StartSerf()
 				servers.StartHTTPServer(port, topic)
+				//gRPC server is started automatically using init() function
 			},
 		},
 	}

@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package grpcservice;
+
+service MessageService {
+    rpc NewMessage(GubsubMessage) returns (GubsubReply) {}
+}
+
+message GubsubMessage {
+    bytes m = 1;
+    string t = 2;
+}
+
+message GubsubReply {
+    bytes statusCode = 1;
+}

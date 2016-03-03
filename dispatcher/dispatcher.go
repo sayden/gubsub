@@ -3,11 +3,11 @@ package dispatcher
 import (
 	"sync"
 
-	log "github.com/sayden/gubsub/Godeps/_workspace/src/github.com/Sirupsen/logrus"
 	serfclient "github.com/hashicorp/serf/client"
+	log "github.com/sayden/gubsub/Godeps/_workspace/src/github.com/Sirupsen/logrus"
+	"github.com/sayden/gubsub/serfin"
 	"github.com/sayden/gubsub/types"
 	"time"
-	"github.com/sayden/gubsub/serfin"
 )
 
 var mutex = &sync.Mutex{}
@@ -35,10 +35,10 @@ func init() {
 	d.AddTopic("default")
 
 	go d.topicDispatcherLoop()
-	go refreshDispatcherLoop()
+	go refreshMemberListLoop()
 }
 
-func refreshDispatcherLoop(){
+func refreshMemberListLoop() {
 	for {
 		time.Sleep(5 * time.Second)
 		log.Info("Current member list is %+v", servers)
@@ -78,7 +78,6 @@ func (d *dispatcher) topicDispatcherLoop() {
 		}
 	}
 }
-
 //AddListenerToTopic will add a listener to one of the topic's arrays so it can
 //be notified since that moment of new messages
 func AddListenerToTopic(l *types.Listener, topic *string) {
