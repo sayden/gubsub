@@ -80,9 +80,10 @@ func GetIPs() (*serfclient.Member, []serfclient.Member, error) {
 	if err != nil {
 		return nil, nil, err
 	}
+
 	if len(members) > 1 {
-		for _, m := range members {
-			for k, ip := range ips {
+		for k, m := range members {
+			for _, ip := range ips {
 				if m.Addr.String() == ip {
 					return &m, append(members[:k], members[k+1:]...), nil
 				}

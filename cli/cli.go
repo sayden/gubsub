@@ -4,8 +4,8 @@ import (
 	"os"
 	//"time"
 
-	log "github.com/sayden/gubsub/Godeps/_workspace/src/github.com/Sirupsen/logrus"
-	"github.com/sayden/gubsub/Godeps/_workspace/src/github.com/codegangsta/cli"
+	log "github.com/Sirupsen/logrus"
+	"github.com/codegangsta/cli"
 	"github.com/sayden/gubsub/dispatcher"
 	"github.com/sayden/gubsub/serf"
 	"github.com/sayden/gubsub/servers"
@@ -74,11 +74,11 @@ func StartCli() {
 			Action: func(c *cli.Context) {
 				data := []byte(c.Args()[1])
 				topic := c.Args()[0]
-				servers.RPC.SendMessage(&types.Message{
-						Data:      &data,
-						Topic:     &topic,
-						Timestamp: time.Now(),
-					})
+				dispatcher.DispatchMessage(&types.Message{
+					Data:      &data,
+					Topic:     &topic,
+					Timestamp: time.Now(),
+				})
 			},
 		},
 		{
@@ -165,7 +165,7 @@ func StartCli() {
 
 				//Directly join to a different server. This could be improved
 				if join != "" {
-					go func(s string){
+					go func(s string) {
 						log.Debug("Trying to connect to %s server", s)
 						time.Sleep(5 * time.Second)
 						serf.Join(s)

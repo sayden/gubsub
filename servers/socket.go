@@ -3,8 +3,8 @@ package servers
 import (
 	"net/http"
 
-	"golang.org/x/net/websocket"
 	"github.com/sayden/gubsub/listener"
+	"golang.org/x/net/websocket"
 )
 
 //AddClient must be called from HTTP endpoints with the new clients connected

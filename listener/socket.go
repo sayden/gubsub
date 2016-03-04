@@ -2,9 +2,9 @@ package listener
 
 import (
 	log "github.com/Sirupsen/logrus"
-	"golang.org/x/net/websocket"
 	"github.com/sayden/gubsub/dispatcher"
 	"github.com/sayden/gubsub/types"
+	"golang.org/x/net/websocket"
 )
 
 //NewSocketListener must be called everytime that a new client is connected

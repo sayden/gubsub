@@ -20,6 +20,12 @@ func StartHTTPServer(port int, endpoint string) {
 		AddClient(c.Request, c.Writer, endpoint)
 	})
 
+	message := r.Group("/message")
+	message.POST("/topic/:name", PostMessageOnTopic)
+
+	members := r.Group("/members")
+	members.GET("/", nil) //TODO Get all members in REST
+
 	listener := r.Group("/listener")
 	listener.GET("/", GetAllListeners)
 	listener.POST("/http/topic/:endpoint", CreateNewHTTPListener)

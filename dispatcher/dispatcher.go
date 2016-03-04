@@ -3,11 +3,13 @@ package dispatcher
 import (
 	"sync"
 
-	serfclient "github.com/hashicorp/serf/client"
+	"time"
+
 	log "github.com/Sirupsen/logrus"
+	serfclient "github.com/hashicorp/serf/client"
+	"github.com/sayden/gubsub/grpc"
 	"github.com/sayden/gubsub/serf"
 	"github.com/sayden/gubsub/types"
-	"time"
 )
 
 var mutex = &sync.Mutex{}
@@ -18,29 +20,33 @@ type dispatcher struct {
 	msgDispatcher     chan *types.Message
 	clusterDispatcher chan *types.Message
 	dispatch          chan *[]byte
+	servers           []serfclient.Member
 }
 
-type Servers []serfclient.Member
-
 var d *dispatcher
-var servers Servers
 
 func init() {
+
 	d = &dispatcher{
-		topics:        make(map[string][]types.Listener),
-		listeners:     make([]types.Listener, 1),
-		msgDispatcher: make(chan *types.Message, 20),
+		topics:            make(map[string][]types.Listener),
+		listeners:         make([]types.Listener, 1),
+		msgDispatcher:     make(chan *types.Message, 20),
 		clusterDispatcher: make(chan *types.Message, 100),
-		dispatch:      make(chan *[]byte),
+		dispatch:          make(chan *[]byte),
+		servers:           []serfclient.Member{},
 	}
+
+	//Launch gRPC server
+	grpcservice.NewGRPCServer(d)
 
 	d.AddTopic("default")
 
 	go d.topicDispatcherLoop()
-	go refreshMemberListLoop()
+	go d.refreshMemberListLoop()
+	go d.clusterDispatcherLoop()
 }
 
-func refreshMemberListLoop() {
+func (d *dispatcher) refreshMemberListLoop() {
 	for {
 		time.Sleep(5 * time.Second)
 		_, ms, err := serf.GetIPs()
@@ -49,8 +55,15 @@ func refreshMemberListLoop() {
 		}
 
 		mutex.Lock()
-		servers = ms
+		d.servers = ms
 		mutex.Unlock()
+	}
+}
+
+func (d *dispatcher) clusterDispatcherLoop() {
+	for {
+		m := <-d.clusterDispatcher
+		grpcservice.RPC.SendMessageInCluster(m, d.servers)
 	}
 }
 
@@ -67,13 +80,19 @@ func (d *dispatcher) AddTopic(name string) error {
 //DispatchMessage takes a message and inserts it into the generic messages channel
 //that will distribute it to the registered servers
 func DispatchMessage(m *types.Message) {
+	d.DispatchMessage(m)
+}
+
+//DispatchMessage takes a message and inserts it into the generic messages channel
+//that will distribute it to the registered servers
+func (d *dispatcher) DispatchMessage(m *types.Message) {
 	d.clusterDispatcher <- m
-	go DispatchMessageLocal(m)
+	go d.DispatchMessageLocal(m)
 }
 
 //DispatchMessageLocal takes a message and inserts it into the generic messages
 // channel that will distribute it to the registered listeners
-func DispatchMessageLocal(m *types.Message) {
+func (d *dispatcher) DispatchMessageLocal(m *types.Message) {
 	d.msgDispatcher <- m
 }
 

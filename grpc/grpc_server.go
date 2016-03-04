@@ -1,4 +1,4 @@
-package servers
+package grpcservice
 
 import (
 	"fmt"
@@ -8,24 +8,22 @@ import (
 	"errors"
 	log "github.com/Sirupsen/logrus"
 	serfclient "github.com/hashicorp/serf/client"
-	"github.com/sayden/gubsub/grpc"
 	"github.com/sayden/gubsub/types"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 )
 
-// server is used to implement helloworld.GreeterServer.
 type rpc_server struct {
-	Port int
+	Port       int
 	Dispatcher types.Dispatcher
 }
 
 var RPC rpc_server
 
-func NewGRPCServer(d types.Dispatcher){
+func NewGRPCServer(d types.Dispatcher) {
 	RPC = rpc_server{
-		Port: 5123,
-		Dispatcher:d,
+		Port:       5123,
+		Dispatcher: d,
 	}
 
 	go func() {
@@ -35,7 +33,7 @@ func NewGRPCServer(d types.Dispatcher){
 }
 
 //NewMessage is the implementation to receive a new message across the cluster
-func (s *rpc_server) NewMessage(ctx context.Context, in *grpcservice.GubsubMessage) (*grpcservice.GubsubReply, error) {
+func (s *rpc_server) NewMessage(ctx context.Context, in *GubsubMessage) (*GubsubReply, error) {
 	log.Info("gRPC message received for topic", in.T)
 	m := types.Message{
 		Data:      &in.M,
@@ -44,7 +42,7 @@ func (s *rpc_server) NewMessage(ctx context.Context, in *grpcservice.GubsubMessa
 	}
 
 	s.Dispatcher.DispatchMessageLocal(&m)
-	return &grpcservice.GubsubReply{StatusCode: 0}, nil
+	return &GubsubReply{StatusCode: 0}, nil
 }
 
 func (s *rpc_server) StartServer() {
@@ -54,7 +52,7 @@ func (s *rpc_server) StartServer() {
 	}
 
 	server := grpc.NewServer()
-	grpcservice.RegisterMessageServiceServer(server, &rpc_server{})
+	RegisterMessageServiceServer(server, &rpc_server{})
 	server.Serve(lis)
 }
 
@@ -87,9 +85,9 @@ func (s *rpc_server) SendMessage(m *types.Message, server serfclient.Member) (in
 		log.Fatalf("did not connect: %v", err)
 	}
 	defer conn.Close()
-	c := grpcservice.NewMessageServiceClient(conn)
+	c := NewMessageServiceClient(conn)
 
-	r, err := c.NewMessage(context.Background(), &grpcservice.GubsubMessage{
+	r, err := c.NewMessage(context.Background(), &GubsubMessage{
 		M: *m.Data,
 		T: *m.Topic,
 	})
