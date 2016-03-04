@@ -4,7 +4,7 @@ import (
 	"sync"
 
 	serfclient "github.com/hashicorp/serf/client"
-	log "github.com/sayden/gubsub/Godeps/_workspace/src/github.com/Sirupsen/logrus"
+	log "github.com/Sirupsen/logrus"
 	"github.com/sayden/gubsub/serf"
 	"github.com/sayden/gubsub/types"
 	"time"
