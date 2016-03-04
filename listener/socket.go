@@ -1,8 +1,8 @@
 package listener
 
 import (
-	log "github.com/sayden/gubsub/Godeps/_workspace/src/github.com/Sirupsen/logrus"
-	"github.com/sayden/gubsub/Godeps/_workspace/src/golang.org/x/net/websocket"
+	log "github.com/Sirupsen/logrus"
+	"golang.org/x/net/websocket"
 	"github.com/sayden/gubsub/dispatcher"
 	"github.com/sayden/gubsub/types"
 )

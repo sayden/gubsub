@@ -3,7 +3,7 @@ package servers
 import (
 	"net/http"
 
-	"github.com/sayden/gubsub/Godeps/_workspace/src/golang.org/x/net/websocket"
+	"golang.org/x/net/websocket"
 	"github.com/sayden/gubsub/listener"
 )
 

@@ -4,9 +4,9 @@ import (
 	"net/http"
 	"time"
 
-	log "github.com/sayden/gubsub/Godeps/_workspace/src/github.com/Sirupsen/logrus"
-	"github.com/sayden/gubsub/Godeps/_workspace/src/github.com/gin-gonic/gin"
-	"github.com/sayden/gubsub/Godeps/_workspace/src/github.com/satori/go.uuid"
+	log "github.com/Sirupsen/logrus"
+	"github.com/gin-gonic/gin"
+	"github.com/satori/go.uuid"
 	"github.com/sayden/gubsub/dispatcher"
 	"github.com/sayden/gubsub/listener"
 	"github.com/sayden/gubsub/types"

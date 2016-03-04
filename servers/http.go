@@ -3,7 +3,7 @@ package servers
 import (
 	"fmt"
 
-	"github.com/sayden/gubsub/Godeps/_workspace/src/github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin"
 )
 
 //StartHTTPServer is the starting point of the application. It is called from

@@ -1,7 +1,7 @@
 package types
 
 import (
-	"github.com/sayden/gubsub/Godeps/_workspace/src/github.com/satori/go.uuid"
+	"github.com/satori/go.uuid"
 )
 
 //Listener struct must hold the information needed by any type of listener
