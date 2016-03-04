@@ -5,8 +5,9 @@ import (
 	"net"
 	"time"
 
+	"errors"
 	log "github.com/Sirupsen/logrus"
-	"github.com/sayden/gubsub/dispatcher"
+	serfclient "github.com/hashicorp/serf/client"
 	"github.com/sayden/gubsub/grpc"
 	"github.com/sayden/gubsub/types"
 	"golang.org/x/net/context"
@@ -16,16 +17,18 @@ import (
 // server is used to implement helloworld.GreeterServer.
 type rpc_server struct {
 	Port int
+	Dispatcher types.Dispatcher
 }
 
 var RPC rpc_server
 
-func init() {
+func NewGRPCServer(d types.Dispatcher){
 	RPC = rpc_server{
 		Port: 5123,
+		Dispatcher:d,
 	}
 
-	go func(){
+	go func() {
 		time.Sleep(2 * time.Second)
 		RPC.StartServer()
 	}()
@@ -33,13 +36,14 @@ func init() {
 
 //NewMessage is the implementation to receive a new message across the cluster
 func (s *rpc_server) NewMessage(ctx context.Context, in *grpcservice.GubsubMessage) (*grpcservice.GubsubReply, error) {
+	log.Info("gRPC message received for topic", in.T)
 	m := types.Message{
 		Data:      &in.M,
 		Topic:     &in.T,
 		Timestamp: time.Now(),
 	}
 
-	dispatcher.DispatchMessageLocal(&m)
+	s.Dispatcher.DispatchMessageLocal(&m)
 	return &grpcservice.GubsubReply{StatusCode: 0}, nil
 }
 
@@ -54,9 +58,31 @@ func (s *rpc_server) StartServer() {
 	server.Serve(lis)
 }
 
-func (s *rpc_server) SendMessage(m *types.Message) (int32, error) {
+func (s *rpc_server) SendMessageInCluster(m *types.Message, servers []serfclient.Member) error {
+	codes := make([]int32, len(servers))
+	for _, server := range servers {
+		statusCode, err := s.SendMessage(m, server)
+		if err != nil {
+			log.Error("Error trying to send message to member %s", server.Addr.String())
+		}
+
+		codes = append(codes, statusCode)
+	}
+
+	for _, c := range codes {
+		if c != 0 {
+			return errors.New("Not all messages have been delivered correctly")
+		}
+	}
+
+	return nil
+}
+
+func (s *rpc_server) SendMessage(m *types.Message, server serfclient.Member) (int32, error) {
+	log.Info("Sending a message across cluster")
+
 	// Set up a connection to the server.
-	conn, err := grpc.Dial(fmt.Sprintf("localhost:%d", s.Port), grpc.WithInsecure())
+	conn, err := grpc.Dial(fmt.Sprintf("%s:%d", server.Addr.String(), s.Port), grpc.WithInsecure())
 	if err != nil {
 		log.Fatalf("did not connect: %v", err)
 	}
