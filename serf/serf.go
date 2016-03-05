@@ -13,16 +13,21 @@ import (
 )
 
 //// Serfer is the common serf client for gubsub.
-var serf *serfclient.RPCClient
+var serfClient *serfclient.RPCClient
+var serfServer *agent.Command
+
+func GetSerfServer() *serfclient.RPCClient {
+	return serfServer
+}
 
 func StartSerf() {
 	ui := &cli.BasicUi{Writer: os.Stdout}
-	serf := &agent.Command{
+	serfServer := &agent.Command{
 		Ui:         ui,
 		ShutdownCh: make(chan struct{}),
 	}
 
-	serf.Run(nil)
+	serfServer.Run(nil)
 }
 
 func Join(targetServer string) error {
@@ -112,13 +117,13 @@ func getLocalNetworksIPs() (ips []string) {
 
 func getSerfClient() (*serfclient.RPCClient, error) {
 	var err error
-	if serf == nil {
-		serf, err = serfclient.NewRPCClient("localhost:7373")
+	if serfClient == nil {
+		serfClient, err = serfclient.NewRPCClient("localhost:7373")
 		if err != nil {
 			log.Fatal(err.Error())
 			os.Exit(1)
 		}
 	}
 
-	return serf, nil
+	return serfClient, nil
 }

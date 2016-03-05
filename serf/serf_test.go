@@ -5,16 +5,6 @@ import (
 	"net"
 )
 
-//func TestListMembers(t *testing.T){
-//	ms, err := ListMembers()
-//	if err != nil {
-//		t.Error(err)
-//	}
-//
-//	for _, v := range ms {
-//		println(v.Addr.String())
-//	}
-//}
 
 func TestGetLocalNetworksIPs(t *testing.T){
 	ips := getLocalNetworksIPs()

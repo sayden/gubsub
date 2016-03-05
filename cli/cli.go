@@ -195,7 +195,7 @@ func StartCli() {
 				go serf.StartSerf()
 				servers.StartHTTPServer(port, topic)
 				//Launch gRPC server
-				grpcservice.NewGRPCServer(dispatcher.Dispatcher)
+				grpcservice.NewGRPCServer(dispatcher.Dispatcher, 5123)
 			},
 		},
 	}
