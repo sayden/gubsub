@@ -26,6 +26,10 @@ type FileListener struct {
 	Path string `json:"path"`
 }
 
+type RPCListener struct {
+	Address string `json:"address"`
+}
+
 func NewListener(topic *string) *Listener {
 	return &Listener{
 		ID:    uuid.NewV4(),

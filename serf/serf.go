@@ -50,13 +50,45 @@ func ListMembers() ([]serfclient.Member, error) {
 //GetIPs will give you your own Member object in the cluster, the rest of the
 //cluster members or an erro
 func GetIPs() (*serfclient.Member, []serfclient.Member, error) {
-	ifaces, err := net.Interfaces()
+	//Local ips
+	ips := getLocalNetworksIPs()
+	if len(ips) == 0 {
+		return nil, nil, errors.New("No networks found")
+	}
+
+	serf, err := getSerfClient()
+	members, err := serf.Members()
 	if err != nil {
 		return nil, nil, err
 	}
 
+	return getMatchingMembers(ips, members)
+}
+
+func getMatchingMembers(ips []string, members []serfclient.Member)(*serfclient.Member, []serfclient.Member, error){
+	if len(members) > 1 {		//two or more
+		for k, m := range members {
+			for _, ip := range ips {
+				if m.Addr.String() == ip {
+					return &m, append(members[:k], members[k+1:]...), nil
+				}
+			}
+		}
+		return nil, nil, errors.New("Could not find the local ip")
+	} else if len(members) == 0 {
+		return nil, nil, errors.New("No servers found")
+	}
+
+	return &members[0], nil, nil
+}
+
+func getLocalNetworksIPs() (ips []string) {
+	ifaces, err := net.Interfaces()
+	if err != nil {
+		return
+	}
+
 	//Local ips
-	var ips []string
 	for _, i := range ifaces {
 		addrs, err := i.Addrs()
 		if err != nil {
@@ -75,26 +107,7 @@ func GetIPs() (*serfclient.Member, []serfclient.Member, error) {
 		}
 	}
 
-	serf, err := getSerfClient()
-	members, err := serf.Members()
-	if err != nil {
-		return nil, nil, err
-	}
-
-	if len(members) > 1 {
-		for k, m := range members {
-			for _, ip := range ips {
-				if m.Addr.String() == ip {
-					return &m, append(members[:k], members[k+1:]...), nil
-				}
-			}
-		}
-		return nil, nil, errors.New("Could not find the local ip")
-	} else if len(members) == 0 {
-		return nil, nil, errors.New("No servers found")
-	}
-
-	return &members[0], nil, nil
+	return
 }
 
 func getSerfClient() (*serfclient.RPCClient, error) {

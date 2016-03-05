@@ -18,6 +18,7 @@ import (
 	"fmt"
 
 	"github.com/sayden/gubsub/types"
+	"github.com/sayden/gubsub/grpc"
 )
 
 func StartCli() {
@@ -74,6 +75,7 @@ func StartCli() {
 			Action: func(c *cli.Context) {
 				data := []byte(c.Args()[1])
 				topic := c.Args()[0]
+				println("ACTION: dispatch")
 				dispatcher.DispatchMessage(&types.Message{
 					Data:      &data,
 					Topic:     &topic,
@@ -96,7 +98,7 @@ func StartCli() {
 				},
 				{
 					Name:        "join",
-					Usage:       "joinTell Serf agent to join cluster",
+					Usage:       "Tell Serf agent to join cluster",
 					Description: "Pass a --server [server:port] as the server you want to connect to",
 					Flags: []cli.Flag{
 						cli.StringFlag{
@@ -139,6 +141,24 @@ func StartCli() {
 						log.Info("Not implemented yet")
 					},
 				},
+				{
+					Name:  "rpc",
+					Usage: "Send a query to the Serf cluster",
+					Action: func(c *cli.Context) {
+						members, err := serf.ListMembers()
+						if err != nil {
+							log.Error(err)
+						}
+
+						d := []byte("hello")
+						t := "default"
+						grpcservice.RPC.SendMessage(&types.Message{
+							Data:&d,
+							Topic: &t,
+							Timestamp:time.Now(),
+						}, members[0])
+					},
+				},
 			},
 		},
 		{
@@ -174,7 +194,8 @@ func StartCli() {
 
 				go serf.StartSerf()
 				servers.StartHTTPServer(port, topic)
-				//gRPC server is started automatically using init() function
+				//Launch gRPC server
+				grpcservice.NewGRPCServer(dispatcher.Dispatcher)
 			},
 		},
 	}

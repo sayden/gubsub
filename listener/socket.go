@@ -13,7 +13,7 @@ func NewSocketListener(ws *websocket.Conn, endpoint *string) {
 	//Creates new listener
 	l := types.NewListener(endpoint)
 
-	dispatcher.AddListenerToTopic(l, endpoint)
+	dispatcher.AddListenerToTopic(l)
 
 	for {
 		m := <-l.Ch

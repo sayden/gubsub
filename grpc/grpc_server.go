@@ -26,6 +26,8 @@ func NewGRPCServer(d types.Dispatcher) {
 		Dispatcher: d,
 	}
 
+	log.Info("RPC Server created")
+
 	go func() {
 		time.Sleep(2 * time.Second)
 		RPC.StartServer()
@@ -41,6 +43,10 @@ func (s *rpc_server) NewMessage(ctx context.Context, in *GubsubMessage) (*Gubsub
 		Timestamp: time.Now(),
 	}
 
+	if s.Dispatcher == nil {
+		log.Error("Dispatcher is nil")
+		return nil, errors.New("dispatcher is nil")
+	}
 	s.Dispatcher.DispatchMessageLocal(&m)
 	return &GubsubReply{StatusCode: 0}, nil
 }
@@ -58,7 +64,9 @@ func (s *rpc_server) StartServer() {
 
 func (s *rpc_server) SendMessageInCluster(m *types.Message, servers []serfclient.Member) error {
 	codes := make([]int32, len(servers))
+	fmt.Printf(" %d %s \n", len(servers), string(*m.Data))
 	for _, server := range servers {
+		fmt.Printf(" %s \n", server.Addr)
 		statusCode, err := s.SendMessage(m, server)
 		if err != nil {
 			log.Error("Error trying to send message to member %s", server.Addr.String())

@@ -18,7 +18,7 @@ func NewFileListener(filePath types.FileListener, topic *string) (*uuid.UUID, er
 
 	//Creates new listener
 	l := types.NewListener(topic)
-	dispatcher.AddListenerToTopic(l, topic)
+	dispatcher.AddListenerToTopic(l)
 
 	go launchFileWriterGoroutine(l, f, &filePath)
 

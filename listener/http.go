@@ -28,7 +28,7 @@ func NewHTTPListener(msg types.HTTPListener, endpoint *string, id *uuid.UUID) {
 
 	*id = l.ID
 
-	dispatcher.AddListenerToTopic(l, endpoint)
+	dispatcher.AddListenerToTopic(l)
 
 	go launchHTTPResponder(l, &msg)
 
