@@ -6,19 +6,17 @@ import (
 	"errors"
 	"net"
 
+	"fmt"
 	log "github.com/Sirupsen/logrus"
 	serfclient "github.com/hashicorp/serf/client"
 	"github.com/hashicorp/serf/command/agent"
 	"github.com/mitchellh/cli"
+	"github.com/sayden/gubsub/config"
+	"github.com/spf13/viper"
 )
 
-//// Serfer is the common serf client for gubsub.
 var serfClient *serfclient.RPCClient
 var serfServer *agent.Command
-
-func GetSerfServer() *serfclient.RPCClient {
-	return serfServer
-}
 
 func StartSerf() {
 	ui := &cli.BasicUi{Writer: os.Stdout}
@@ -70,8 +68,8 @@ func GetIPs() (*serfclient.Member, []serfclient.Member, error) {
 	return getMatchingMembers(ips, members)
 }
 
-func getMatchingMembers(ips []string, members []serfclient.Member)(*serfclient.Member, []serfclient.Member, error){
-	if len(members) > 1 {		//two or more
+func getMatchingMembers(ips []string, members []serfclient.Member) (*serfclient.Member, []serfclient.Member, error) {
+	if len(members) > 1 { //two or more
 		for k, m := range members {
 			for _, ip := range ips {
 				if m.Addr.String() == ip {
@@ -118,7 +116,8 @@ func getLocalNetworksIPs() (ips []string) {
 func getSerfClient() (*serfclient.RPCClient, error) {
 	var err error
 	if serfClient == nil {
-		serfClient, err = serfclient.NewRPCClient("localhost:7373")
+		serfClient, err = serfclient.NewRPCClient(
+			fmt.Sprintf("localhost:%s", viper.GetInt(config.SERF_RPC)))
 		if err != nil {
 			log.Fatal(err.Error())
 			os.Exit(1)

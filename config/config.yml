@@ -1,0 +1,56 @@
+# Default port to start the server
+server_port: 8300
+
+
+# Default port to start the gRPC server
+rpc_port: 5123
+
+
+# Gubsub uses some delays before executing some tasks
+# this is to control the timing a bit better in startup
+delays:
+  # Wait 'x' seconds before trying to join a server if you
+  # use '--join' flag on 'server' command
+  join: 5
+  # Wait 'x' seconds to avoid all flushes in the app before
+  # exiting
+  shutdown: 5
+
+  # Wait 'x' seconds before start the grpc server for
+  # communication between gubsub servers
+  grpc_server_start: 2
+
+
+# Name of the default topic
+default_topic: default
+
+
+# Configuration of Hashicorp's Serf
+serf:
+  # Serf port to communicate between serf members
+  port: 7946
+
+  # RPC port to communicate with serf from exterior
+  rpc: 7373
+
+
+# EXPERT ONLY! Configuration to tweak performance
+performance_queues:
+  # Size of the channel that receives the messages
+  message_size: 20
+
+  # Size of the channel that dispatch messages to cluster
+  message_cluster_size: 100
+
+# There are goroutines that check things periodically
+refresh_loops_delay_seconds:
+  # Time between each refresh of the cluster member list
+  # requesting serf
+  member_list: 5
+
+
+# Special configuration for listeners
+listeners:
+  file:
+    # Delay to wait before syncing file writes to disk
+    write_to_file_delay: 5

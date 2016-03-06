@@ -2,7 +2,6 @@ package cli
 
 import (
 	"os"
-	//"time"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/codegangsta/cli"
@@ -17,8 +16,10 @@ import (
 
 	"fmt"
 
-	"github.com/sayden/gubsub/types"
 	"github.com/sayden/gubsub/grpc"
+	"github.com/sayden/gubsub/types"
+	"github.com/sayden/gubsub/config"
+	"github.com/spf13/viper"
 )
 
 func StartCli() {
@@ -29,22 +30,22 @@ func StartCli() {
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
 			Name:  "topic, t",
-			Value: "default",
+			Value: viper.GetString(config.DEFAULT_TOPIC),
 			Usage: "Sets the name of the default topic",
 		},
 		cli.IntFlag{
 			Name:  "port, p",
-			Value: 8002,
+			Value: viper.GetInt(config.SERVER_PORT),
 			Usage: "Sets the broker port",
 		},
 		cli.IntFlag{
 			Name:  "serf-port, sp",
-			Value: 7946,
+			Value: viper.GetInt(config.SERF_PORT),
 			Usage: "Sets the Serf Bind address port",
 		},
 		cli.IntFlag{
 			Name:  "serf-rpc, srp",
-			Value: 7373,
+			Value: viper.GetInt(config.SERF_RPC),
 			Usage: "Sets the Serf RPC port",
 		},
 	}
@@ -153,9 +154,9 @@ func StartCli() {
 						d := []byte("hello")
 						t := "default"
 						grpcservice.RPC.SendMessage(&types.Message{
-							Data:&d,
-							Topic: &t,
-							Timestamp:time.Now(),
+							Data:      &d,
+							Topic:     &t,
+							Timestamp: time.Now(),
 						}, members[0])
 					},
 				},
@@ -176,7 +177,7 @@ func StartCli() {
 				join := c.String("join")
 
 				if port == 0 {
-					port = 8300
+					port = viper.GetInt(config.SERVER_PORT)
 				}
 
 				if topic == "" {
@@ -187,7 +188,7 @@ func StartCli() {
 				if join != "" {
 					go func(s string) {
 						log.Debug("Trying to connect to %s server", s)
-						time.Sleep(5 * time.Second)
+						time.Sleep(time.Duration(viper.GetInt(config.JOIN_DELAY)) * time.Second)
 						serf.Join(s)
 					}(join)
 				}
@@ -195,7 +196,7 @@ func StartCli() {
 				go serf.StartSerf()
 				servers.StartHTTPServer(port, topic)
 				//Launch gRPC server
-				grpcservice.NewGRPCServer(dispatcher.Dispatcher, 5123)
+				grpcservice.NewGRPCServer(dispatcher.Dispatcher, viper.GetInt(config.RPC_PORT))
 			},
 		},
 	}
@@ -214,7 +215,7 @@ func signalCapture() {
 	for {
 		<-signalCh
 		log.Info("Shutting down Gubsub. Waiting 5 seconds")
-		time.Sleep(5 * time.Second)
+		time.Sleep(time.Duration(viper.GetInt(config.SHUTDOWN_DELAY)) * time.Second)
 		log.Info("Waited for 5 seconds. Bye!")
 		os.Exit(0)
 	}

@@ -8,7 +8,9 @@ import (
 	"errors"
 	log "github.com/Sirupsen/logrus"
 	serfclient "github.com/hashicorp/serf/client"
+	"github.com/sayden/gubsub/config"
 	"github.com/sayden/gubsub/types"
+	"github.com/spf13/viper"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 )
@@ -20,18 +22,20 @@ type rpc_server struct {
 
 var RPC rpc_server
 
-func NewGRPCServer(d types.Dispatcher) {
+func NewGRPCServer(d types.Dispatcher, port int) *rpc_server {
 	RPC = rpc_server{
-		Port:       5123,
+		Port:       port,
 		Dispatcher: d,
 	}
 
 	log.Info("RPC Server created")
 
 	go func() {
-		time.Sleep(2 * time.Second)
+		time.Sleep(time.Duration(viper.GetInt(config.GRPC_SERVER_START_DELAY)) * time.Second)
 		RPC.StartServer()
 	}()
+
+	return &RPC
 }
 
 //NewMessage is the implementation to receive a new message across the cluster

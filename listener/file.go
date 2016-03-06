@@ -8,6 +8,8 @@ import (
 	"github.com/sayden/gubsub/dispatcher"
 	"github.com/sayden/gubsub/types"
 	"time"
+	"github.com/spf13/viper"
+"github.com/sayden/gubsub/config"
 )
 
 func NewFileListener(filePath types.FileListener, topic *string) (*uuid.UUID, error) {
@@ -28,7 +30,7 @@ func NewFileListener(filePath types.FileListener, topic *string) (*uuid.UUID, er
 func launchFileWriterGoroutine(l *types.Listener, f *os.File, filePath *types.FileListener) {
 
 	var sync, quit chan bool
-	go SyncWrite(sync, 5, quit)
+	go SyncWrite(sync, quit)
 
 	for {
 		select {
@@ -52,13 +54,13 @@ func launchFileWriterGoroutine(l *types.Listener, f *os.File, filePath *types.Fi
 	f.Close()
 }
 
-func SyncWrite(c chan bool, seconds uint8, q chan bool) {
+func SyncWrite(c chan bool, q chan bool) {
 	for {
 		select {
 		case <-q:
 			return
 		default:
-			time.Sleep(time.Duration(seconds) * time.Second)
+			time.Sleep(time.Duration(viper.GetInt(config.WRITE_TO_FILE_DELAY)) * time.Second)
 			c <- true
 		}
 	}

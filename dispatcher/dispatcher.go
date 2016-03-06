@@ -7,9 +7,11 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	serfclient "github.com/hashicorp/serf/client"
+	"github.com/sayden/gubsub/config"
 	"github.com/sayden/gubsub/grpc"
 	"github.com/sayden/gubsub/serf"
 	"github.com/sayden/gubsub/types"
+	"github.com/spf13/viper"
 )
 
 var mutex = &sync.Mutex{}
@@ -30,12 +32,11 @@ func init() {
 	Dispatcher = &dispatcher{
 		topics:            make(map[string][]types.Listener),
 		listeners:         make([]types.Listener, 1),
-		msgDispatcher:     make(chan *types.Message, 20),
-		clusterDispatcher: make(chan *types.Message, 100),
-		dispatch:          make(chan *[]byte),
-		servers:           []serfclient.Member{},
+		msgDispatcher:     make(chan *types.Message, viper.GetInt(config.MESSAGE_SIZE)),
+		clusterDispatcher: make(chan *types.Message, viper.GetInt(config.MESSAGE_CLUSTER_SIZE)),
+		//dispatch:          make(chan *[]byte),
+		servers: []serfclient.Member{},
 	}
-
 
 	Dispatcher.AddTopic("default")
 
@@ -46,7 +47,7 @@ func init() {
 
 func (d *dispatcher) refreshMemberListLoop() {
 	for {
-		time.Sleep(5 * time.Second)
+		time.Sleep(time.Duration(viper.GetInt(config.MEMBER_LIST_REFRESH_SECONDS)) * time.Second)
 		_, ms, err := serf.GetIPs()
 		if err != nil {
 			log.Error(err)
