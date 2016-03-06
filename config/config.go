@@ -6,8 +6,8 @@ import (
 )
 
 //Global
-const SERVER_PORT string = "server_port"
-const RPC_PORT string = "rpc_port"
+const HTTP_SERVER_PORT string = "http_server_port"
+const GRPC_SERVER_PORT string = "grpc_server_port"
 const DEFAULT_TOPIC string = "default_topic"
 
 //Delays
@@ -30,12 +30,12 @@ const MESSAGE_SIZE string = "performance_queues.message_size"
 const MESSAGE_CLUSTER_SIZE string = "performance_queues.message_cluster_size"
 
 func init(){
-	ReadConfig()
+	readConfig("config")
 }
 
-func ReadConfig(){
+func readConfig(path string){
+	viper.AddConfigPath(path)
 	viper.SetConfigName("config")
-	viper.AddConfigPath(".")
 	err := viper.ReadInConfig()
 	if err != nil {
 		log.Error("Couldn't read config file: ", err)

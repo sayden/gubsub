@@ -20,12 +20,17 @@ type rpc_server struct {
 	Dispatcher types.Dispatcher
 }
 
-var RPC rpc_server
+var RPC *rpc_server
 
-func NewGRPCServer(d types.Dispatcher, port int) *rpc_server {
-	RPC = rpc_server{
+func NewGRPCServer(d types.Dispatcher, port int) {
+	log.Info("Creating a gRPC server in port ", port)
+	RPC = &rpc_server{
 		Port:       port,
 		Dispatcher: d,
+	}
+
+	if RPC.Dispatcher == nil {
+		log.Fatal("DISPATCHER IS STILL NILL")
 	}
 
 	log.Info("RPC Server created")
@@ -34,8 +39,6 @@ func NewGRPCServer(d types.Dispatcher, port int) *rpc_server {
 		time.Sleep(time.Duration(viper.GetInt(config.GRPC_SERVER_START_DELAY)) * time.Second)
 		RPC.StartServer()
 	}()
-
-	return &RPC
 }
 
 //NewMessage is the implementation to receive a new message across the cluster
@@ -71,7 +74,7 @@ func (s *rpc_server) SendMessageInCluster(m *types.Message, servers []serfclient
 	fmt.Printf(" %d %s \n", len(servers), string(*m.Data))
 	for _, server := range servers {
 		fmt.Printf(" %s \n", server.Addr)
-		statusCode, err := s.SendMessage(m, server)
+		statusCode, err := SendMessage(m, server)
 		if err != nil {
 			log.Error("Error trying to send message to member %s", server.Addr.String())
 		}
@@ -88,11 +91,15 @@ func (s *rpc_server) SendMessageInCluster(m *types.Message, servers []serfclient
 	return nil
 }
 
-func (s *rpc_server) SendMessage(m *types.Message, server serfclient.Member) (int32, error) {
+//func (s *rpc_server) SendMessage(m *types.Message, server serfclient.Member) (int32, error) {
+func SendMessage(m *types.Message, server serfclient.Member) (int32, error) {
 	log.Info("Sending a message across cluster")
 
 	// Set up a connection to the server.
-	conn, err := grpc.Dial(fmt.Sprintf("%s:%d", server.Addr.String(), s.Port), grpc.WithInsecure())
+	url := fmt.Sprintf("%s:%d", server.Addr.String(), viper.GetInt(config.GRPC_SERVER_PORT))
+	log.Info("Setting connection to url: ", url)
+
+	conn, err := grpc.Dial(url, grpc.WithInsecure())
 	if err != nil {
 		log.Fatalf("did not connect: %v", err)
 	}

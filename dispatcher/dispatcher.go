@@ -25,24 +25,35 @@ type dispatcher struct {
 	servers           []serfclient.Member
 }
 
-var Dispatcher *dispatcher
+var disp *dispatcher
 
-func init() {
+func GetDispatcher() *dispatcher {
+	for {
+		if disp == nil {
+			log.Info("Waiting for dispatcher to be created")
+			time.Sleep(time.Second)
+		} else {
+			log.Info("Dispatcher created")
+			return disp
+		}
+	}
+}
 
-	Dispatcher = &dispatcher{
+func StartDispatcher() {
+
+	disp = &dispatcher{
 		topics:            make(map[string][]types.Listener),
 		listeners:         make([]types.Listener, 1),
 		msgDispatcher:     make(chan *types.Message, viper.GetInt(config.MESSAGE_SIZE)),
 		clusterDispatcher: make(chan *types.Message, viper.GetInt(config.MESSAGE_CLUSTER_SIZE)),
-		//dispatch:          make(chan *[]byte),
 		servers: []serfclient.Member{},
 	}
 
-	Dispatcher.AddTopic("default")
+	disp.AddTopic(viper.GetString(config.DEFAULT_TOPIC))
 
-	go Dispatcher.topicDispatcherLoop()
-	go Dispatcher.refreshMemberListLoop()
-	go Dispatcher.clusterDispatcherLoop()
+	go disp.topicDispatcherLoop()
+	go disp.refreshMemberListLoop()
+	go disp.clusterDispatcherLoop()
 }
 
 func (d *dispatcher) refreshMemberListLoop() {
@@ -79,7 +90,7 @@ func (d *dispatcher) AddTopic(name string) error {
 //DispatchMessage takes a message and inserts it into the generic messages channel
 //that will distribute it to the registered servers
 func DispatchMessage(m *types.Message) {
-	Dispatcher.DispatchMessage(m)
+	disp.DispatchMessage(m)
 }
 
 //DispatchMessage takes a message and inserts it into the generic messages channel
@@ -114,14 +125,14 @@ func AddListenerToTopic(l *types.Listener) {
 	}).Info("New listener")
 
 	mutex.Lock()
-	Dispatcher.topics[l.Topic] = append(Dispatcher.topics[l.Topic], *l)
+	disp.topics[l.Topic] = append(disp.topics[l.Topic], *l)
 	mutex.Unlock()
 }
 
 //GetAllTopics will return an array of strings with the registered topic names
 func GetAllTopics() []string {
 	var ts []string
-	for k := range Dispatcher.topics {
+	for k := range disp.topics {
 		ts = append(ts, k)
 	}
 	return ts
@@ -130,8 +141,8 @@ func GetAllTopics() []string {
 //GetAllListeners will return an array with all listeners for each topic
 func GetAllListeners() []types.Listener {
 	var ls []types.Listener
-	for k := range Dispatcher.topics {
-		for _, l := range Dispatcher.topics[k] {
+	for k := range disp.topics {
+		for _, l := range disp.topics[k] {
 			ls = append(ls, l)
 		}
 	}
@@ -142,14 +153,14 @@ func GetAllListeners() []types.Listener {
 //the the specified topic
 func RemoveListener(l *types.Listener) error {
 	mutex.Lock()
-	ls := Dispatcher.topics[l.Topic]
+	ls := disp.topics[l.Topic]
 	for i, _l := range ls {
 		if *l == _l {
 			ls = append(ls[:i], ls[i+1:]...)
 		}
 	}
 
-	Dispatcher.topics[l.Topic] = ls
+	disp.topics[l.Topic] = ls
 	mutex.Unlock()
 
 	return nil

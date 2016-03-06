@@ -16,7 +16,7 @@ import (
 )
 
 var serfClient *serfclient.RPCClient
-var serfServer *agent.Command
+//var serfServer *agent.Command
 
 func StartSerf() {
 	ui := &cli.BasicUi{Writer: os.Stdout}
@@ -117,9 +117,9 @@ func getSerfClient() (*serfclient.RPCClient, error) {
 	var err error
 	if serfClient == nil {
 		serfClient, err = serfclient.NewRPCClient(
-			fmt.Sprintf("localhost:%s", viper.GetInt(config.SERF_RPC)))
+			fmt.Sprintf("localhost:%d", viper.GetInt(config.SERF_RPC)))
 		if err != nil {
-			log.Fatal(err.Error())
+			log.Fatal("Could not create serf client: ", err.Error())
 			os.Exit(1)
 		}
 	}

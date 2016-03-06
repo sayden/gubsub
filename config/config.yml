@@ -1,9 +1,9 @@
 # Default port to start the server
-server_port: 8300
+http_server_port: 8300
 
 
 # Default port to start the gRPC server
-rpc_port: 5123
+grpc_server_port: 5123
 
 
 # Gubsub uses some delays before executing some tasks

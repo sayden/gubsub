@@ -6,13 +6,13 @@ import (
 )
 
 func TestReadConfig(t *testing.T){
-	ReadConfig()
+	readConfig(".")
 
-	isSet := viper.IsSet(RPC_PORT)
+	isSet := viper.IsSet(GRPC_SERVER_PORT)
 	if !isSet {
 		t.Fatal("no rpc_port variable found")
 	}
-	port := viper.GetInt(RPC_PORT)
+	port := viper.GetInt(GRPC_SERVER_PORT)
 	if port != 5123 {
 		t.Fatal("rpc port was not 5123")
 	}
@@ -24,5 +24,15 @@ func TestReadConfig(t *testing.T){
 	joinDelay := viper.GetInt(JOIN_DELAY)
 	if joinDelay != 5 {
 		t.Fatal("Error getting join delay")
+	}
+
+	isSet = viper.IsSet(SERF_RPC)
+	if !isSet {
+		t.Fatal("Serf rpc port is not set")
+	}
+
+	port = viper.GetInt(SERF_RPC)
+	if port != 7373 {
+		t.Fatalf("Serf port is not 7373: %d\n", port)
 	}
 }

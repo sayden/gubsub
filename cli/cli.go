@@ -35,7 +35,7 @@ func StartCli() {
 		},
 		cli.IntFlag{
 			Name:  "port, p",
-			Value: viper.GetInt(config.SERVER_PORT),
+			Value: viper.GetInt(config.HTTP_SERVER_PORT),
 			Usage: "Sets the broker port",
 		},
 		cli.IntFlag{
@@ -153,7 +153,7 @@ func StartCli() {
 
 						d := []byte("hello")
 						t := "default"
-						grpcservice.RPC.SendMessage(&types.Message{
+						grpcservice.SendMessage(&types.Message{
 							Data:      &d,
 							Topic:     &t,
 							Timestamp: time.Now(),
@@ -176,14 +176,6 @@ func StartCli() {
 				topic := c.GlobalString("topic")
 				join := c.String("join")
 
-				if port == 0 {
-					port = viper.GetInt(config.SERVER_PORT)
-				}
-
-				if topic == "" {
-					topic = "default"
-				}
-
 				//Directly join to a different server. This could be improved
 				if join != "" {
 					go func(s string) {
@@ -193,10 +185,13 @@ func StartCli() {
 					}(join)
 				}
 
+				go dispatcher.StartDispatcher()
 				go serf.StartSerf()
-				servers.StartHTTPServer(port, topic)
+
 				//Launch gRPC server
-				grpcservice.NewGRPCServer(dispatcher.Dispatcher, viper.GetInt(config.RPC_PORT))
+				go grpcservice.NewGRPCServer(dispatcher.GetDispatcher(), viper.GetInt(config.GRPC_SERVER_PORT))
+
+				servers.StartHTTPServer(port, topic)
 			},
 		},
 	}

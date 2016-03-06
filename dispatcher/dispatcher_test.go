@@ -95,7 +95,7 @@ func TestChannelRoutes(t *testing.T){
 		Timestamp:time.Now(),
 	}
 
-	Dispatcher.DispatchMessageLocal(&m)
+	disp.DispatchMessageLocal(&m)
 
 	DispatchMessage(&m)
 
